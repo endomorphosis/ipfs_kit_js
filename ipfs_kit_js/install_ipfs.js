@@ -206,7 +206,7 @@ export class InstallIPFS {
     
     async installIPFSClusterCtl(options = {}) {
         try {
-            const detect = execSync(this.pathString + "which ipfs-cluster-ctl").toString().trim();
+            const detect = execSync(`"${this.pathString}" which ipfs-cluster-ctl`).toString().trim();
             if (detect) {
                 console.log('ipfs-cluster-ctl is already installed.');
                 return true;
@@ -240,7 +240,7 @@ export class InstallIPFS {
                         }
                         try {
                             // Verify installation
-                            const version = execSync(this.pathString + 'ipfs-cluster-ctl --version').toString().trim();
+                            const version = execSync(`"${this.pathString}" ipfs-cluster-ctl --version`).toString().trim();
                             console.log(`Installed ipfs-cluster-ctl version: ${version}`);
                             resolve(true); // Resolve the promise here
                         } catch (e) {
@@ -263,7 +263,7 @@ export class InstallIPFS {
     
     async installIPFSClusterService(options = {}) {
         try {
-            const detect = execSync(this.pathString + "which ipfs-cluster-service").toString().trim();
+            const detect = execSync(`"${this.pathString}" which ipfs-cluster-service`).toString().trim();
             if (detect) {
                 console.log('ipfs-cluster-service is already installed.');
                 return true;
@@ -298,7 +298,7 @@ export class InstallIPFS {
                         }
                         try {
                             // Verify installation
-                            const version = execSync(this.pathString + 'ipfs-cluster-service --version').toString().trim();
+                            const version = execSync(`"${this.pathString}" ipfs-cluster-service --version`).toString().trim();
                             console.log(`Installed ipfs-cluster-service version: ${version}`);
                             // if root user, write and enable systemd service
                             if (os.userInfo().username == "root") {
@@ -337,7 +337,7 @@ export class InstallIPFS {
     async installIPGet(options = {}) {
         try {
             // Check if ipget is already installed
-            const detect = execSync(this.pathString + " which ipget").toString().trim();
+            const detect = execSync(`"${this.pathString}" which ipget`).toString().trim();
             if (detect) {
                 //console.log('ipget is already installed.');
                 return true;
@@ -382,9 +382,10 @@ export class InstallIPFS {
                         // TODO: Figure out if IPGET is still used. If so, fix the installation process. Try and create
                         //       Portable installation that is in the repository so it doesn't require system install.
                         console.log('Please run as root user to install ipget globally');
+                        //FIXME: Fails because of permissions can't write into usr/local/bin as non-root user
                         let tmpCommand = `cd ${tmpDir}/ipget && bash install.sh`;
-                        let tmpCommand2 = `cd ${tmpDir}/ipget && cp ipget `+ this.thisDir  + `/bin/ipget && chmod +x `+ this.thisDir  + `/bin/ipget`;
-                        // FIXME: CP Fails here
+                        // FIXME: Fails because thisDir/bin/ipget doesn't exist? I thought CP should create it?
+                        let tmpCommand2 = `mkdir -p "`+ this.thisDir  + `/bin" && cd ${tmpDir}/ipget && cp ipget "`+ this.thisDir  + `/bin/ipget" && chmod +x "`+ this.thisDir  + `/bin/ipget"`;
                         execSync(tmpCommand);
                         execSync(tmpCommand2);
                         // execSync(`cd ${tmpDir}/ipget && bash install.sh`);      
@@ -392,7 +393,7 @@ export class InstallIPFS {
 
                     // Verify installation
                     try {
-                        const version = execSync(this.pathString + ' ipget --version').toString().trim();
+                        const version = execSync(`"${this.pathString}" ipget --version`).toString().trim();
                         console.log(`Installed ipget version: ${version}`);
                         resolve(true); // Resolve the promise here
                     } catch (verificationError) {
@@ -446,7 +447,7 @@ export class InstallIPFS {
                     //        error loading configurations: invalid character 'c' looking for beginning of object key string
                     //        When re-running the ipfs-cluster-service init -f manually it works fine the config is generated correctly.
                     const initClusterDaemon = `IPFS_PATH=${ipfsPath} ipfs-cluster-service init -f`;
-                    initClusterDaemonResults = execSync(this.pathString + initClusterDaemon).toString();
+                    initClusterDaemonResults = execSync(`"${this.pathString}" initClusterDaemon`).toString();
                     const configClusterDaemon = `cp ${this.thisDir}/service.json ${servicePath}/service.json`;
                     const configClusterDaemonResults = execSync(configClusterDaemon).toString();
                 }
@@ -539,7 +540,7 @@ export class InstallIPFS {
         let run_daemon;
         let run_cluster_ctl;
         let findDaemonResuls = 0;
-        let runIPFSClusterService = this.pathString + "ipfs-cluster-service daemon";
+        let runIPFSClusterService = `"${this.pathString}" ipfs-cluster-service daemon`;
         console.log("Starting ipfs-cluster-service daemon");
         // console.log(runIPFSClusterService);
 
@@ -570,7 +571,7 @@ export class InstallIPFS {
         run_daemon = findDaemonResuls;
         try {
             // FIXME: This throws an error but i'm not sure if this is due to an install error or if i'm missing the peers etc.
-            let run_cluster_ctl_cmd =  this.pathString + "ipfs-cluster-ctl peers ls";       
+            let run_cluster_ctl_cmd =  `"${this.pathString}" ipfs-cluster-ctl peers ls`;       
             run_cluster_ctl = execSync(run_cluster_ctl_cmd, { timeout: 5000 }).toString();
             console.log(run_cluster_ctl)
         } catch (error) {
