@@ -23,7 +23,7 @@ export class InstallIPFS {
     constructor(resources, meta = null) {
         this.resources = resources;
         this.meta = meta;
-        this.thisDir = path.dirname(new URL(import.meta.url).pathname);
+        this.thisDir = decodeURI(path.dirname(new URL(import.meta.url).pathname));
         this.ipfsTestInstall = this.ipfsTestInstall.bind(this);
         this.env = process.env;
         this.path = process.env.PATH;
@@ -113,10 +113,10 @@ export class InstallIPFS {
                 return true;
             }
         } catch (e) {
-            console.error(e);
+            console.error(e.message);
             detect = '';
         }
-        let thisDir = this.thisDir || path.dirname(new URL(import.meta.url).pathname);
+        let thisDir = this.thisDir || decodeURI(path.dirname(new URL(import.meta.url).pathname));
 
         if (!detect) {
             try {
@@ -124,6 +124,7 @@ export class InstallIPFS {
                 const tarFile = path.join(tmpDir, "kubo.tar.gz");
                 execSync(`wget ${this.ipfs_dist_tar} -O ${tarFile}`);
                 execSync(`tar -xvzf ${tarFile} -C ${tmpDir}`);
+                // TODO: Intended to run silently why is there SUDO here? Needs to be fixed
                 execSync(`cd ${tmpDir}/kubo && sudo bash install.sh`);
                 const results = execSync("ipfs --version").toString().trim();
                 const serviceConfig = fs.readFileSync(path.join(thisDir, 'ipfs.service')).toString();
@@ -153,7 +154,7 @@ export class InstallIPFS {
             const url = this.ipfs_follow_dist_tar;
             const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ipfs-cluster-follow-'));
             const tarPath = path.join(tmpDir, url.split('/')[-1]);
-            let thisDir = this.thisDir || path.dirname(new URL(import.meta.url).pathname);
+            let thisDir = this.thisDir || decodeURI(path.dirname(new URL(import.meta.url).pathname));
 
             const file = fs.createWriteStream(tarPath);
             new Promise((resolve, reject) => {
@@ -274,7 +275,7 @@ export class InstallIPFS {
         const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ipfs-cluster-service-'));
         const tarPath = path.join(tmpDir, 'ipfs-cluster-service.tar.gz');
         const url = "https://dist.ipfs.tech/ipfs-cluster-service/v1.0.8/ipfs-cluster-service_v1.0.8_linux-amd64.tar.gz";
-        let thisDir = this.thisDir || path.dirname(new URL(import.meta.url).pathname);
+        let thisDir = this.thisDir || decodeURI(path.dirname(new URL(import.meta.url).pathname));
     
         // Download and extract the tarball
         const file = fs.createWriteStream(tarPath);
@@ -383,6 +384,7 @@ export class InstallIPFS {
                         console.log('Please run as root user to install ipget globally');
                         let tmpCommand = `cd ${tmpDir}/ipget && bash install.sh`;
                         let tmpCommand2 = `cd ${tmpDir}/ipget && cp ipget `+ this.thisDir  + `/bin/ipget && chmod +x `+ this.thisDir  + `/bin/ipget`;
+                        // FIXME: CP Fails here
                         execSync(tmpCommand);
                         execSync(tmpCommand2);
                         // execSync(`cd ${tmpDir}/ipget && bash install.sh`);      
@@ -420,7 +422,7 @@ export class InstallIPFS {
         if (!clusterName) throw new Error("clusterName is None");
         if (!secret) throw new Error("secret is None");
 
-        let thisDir = this.thisDir || path.dirname(new URL(import.meta.url).pathname);
+        let thisDir = this.thisDir || decodeURI(path.dirname(new URL(import.meta.url).pathname));
         let homeDir = os.homedir();
         let clusterPath = path.join(ipfsPath, clusterName);
         let servicePath;
@@ -621,7 +623,7 @@ export class InstallIPFS {
         if (!clusterName) throw new Error("clusterName is None");
         if (!secret) throw new Error("secret is None");
 
-        let thisDir = this.thisDir || path.dirname(new URL(import.meta.url).pathname);
+        let thisDir = this.thisDir || decodeURI(path.dirname(new URL(import.meta.url).pathname));
         let homeDir = os.homedir();
         let clusterPath = path.join(ipfsPath, clusterName);
         let followPath;
