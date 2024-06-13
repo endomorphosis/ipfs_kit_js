@@ -1,4 +1,3 @@
-
 import { execSync, exec } from 'child_process';
 import fs from 'fs';
 import os from 'os';
@@ -26,8 +25,14 @@ export class InstallIPFS {
         this.thisDir = decodeURI(path.dirname(new URL(import.meta.url).pathname));
         this.ipfsTestInstall = this.ipfsTestInstall.bind(this);
         this.env = process.env;
+        // Appends the project-bin directory to the path
         this.path = process.env.PATH;
+        console.log(this.path)
         this.path = this.path + ":" + path.join(this.thisDir, "bin");
+        console.log(this.path)
+        // Set the path variable to the newly appended path
+        process.env.PATH = this.path;
+
         this.pathString = `PATH=${this.path} `;
         this.ipfs_dist_tar = "https://dist.ipfs.tech/kubo/v0.26.0/kubo_v0.26.0_linux-amd64.tar.gz";
         this.ipfs_follow_dist_tar = "https://dist.ipfs.tech/ipfs-cluster-follow/v1.0.8/ipfs-cluster-follow_v1.0.8_linux-amd64.tar.gz";
@@ -124,16 +129,18 @@ export class InstallIPFS {
                 const tarFile = path.join(tmpDir, "kubo.tar.gz");
                 execSync(`wget ${this.ipfs_dist_tar} -O ${tarFile}`);
                 execSync(`tar -xvzf ${tarFile} -C ${tmpDir}`);
-                // TODO: Intended to run silently why is there SUDO here? Needs to be fixed
-                execSync(`cd ${tmpDir}/kubo && sudo bash install.sh`);
-                const results = execSync("ipfs --version").toString().trim();
-                const serviceConfig = fs.readFileSync(path.join(thisDir, 'ipfs.service')).toString();
                 if (os.userInfo().username == "root") {
+                    execSync(`cd ${tmpDir}/kubo && bash install.sh`);
+                    const serviceConfig = fs.readFileSync(path.join(thisDir, 'ipfs.service')).toString();
                     fs.writeFileSync("/etc/systemd/system/ipfs.service", serviceConfig);
                     execSync("systemctl enable ipfs");
                 }else{
+                    // TODO: Add non root user install ( move to thisDir/bin/ipfs and add path)
                     console.log('Please run as root user to enable systemd service');
+                    // Maybe need to change command if bin/ipfs exists it causes error for half baked installs etc. 
+                    execSync(`cd ${tmpDir}/kubo && mkdir -p "${thisDir}/bin/" && mv ipfs "${thisDir}/bin/" && chmod +x "${thisDir}/bin/ipfs"`);
                 }
+                const results = execSync("ipfs --version").toString().trim();
                 return results.includes("ipfs");
             } catch (e) {
                 console.error(e);
@@ -171,18 +178,19 @@ export class InstallIPFS {
                         }).then(() => {
                             console.log('Extraction completed.');
                             const binPath = path.join(tmpDir, 'ipfs-cluster-follow', 'ipfs-cluster-follow');
-                            execSync(`sudo mv ${binPath} /usr/local/bin/ipfs-cluster-follow`);
                             try {
                                 // Verify installation
                                 const version = execSync('ipfs-cluster-follow --version').toString().trim();
                                 console.log(`Installed ipfs-cluster-follow version: ${version}`);
                                 if (os.userInfo().username == "root") {
+                                    execSync(`sudo mv ${binPath} /usr/local/bin/ipfs-cluster-follow`);
                                     let serviceConfig = fs.readFileSync(path.join(thisDir, 'ipfs_clusterFollow.service')).toString();
                                     fs.writeFileSync('/etc/systemd/system/ipfs-cluster-follow.service', serviceConfig);
                                     execSync('systemctl enable ipfs-cluster-follow');
                                     console.log('ipfs-cluster-follow service enabled.');
                                 }
                                 else{
+                                    // FIXME: Add non root user install ( move to thisDir/bin/ipfs-cluster-follow and add path)
                                     console.log('Please run as root user to enable systemd service');
                                 }
                             } catch (e) {
@@ -236,11 +244,11 @@ export class InstallIPFS {
                         if (os.userInfo().username == "root") {
                             execSync(`sudo mv ${binPath} /usr/local/bin/ipfs-cluster-ctl`);
                         } else {
-                            execSync(`mv ${binPath} `+ this.thisDir  + `/bin/ipfs-cluster-ctl`);
+                            execSync(`mv "${binPath}" "${this.thisDir}/bin/ipfs-cluster-ctl"`);
                         }
                         try {
                             // Verify installation
-                            const version = execSync(`"${this.pathString}" ipfs-cluster-ctl --version`).toString().trim();
+                            const version = execSync(`ipfs-cluster-ctl --version`).toString().trim();
                             console.log(`Installed ipfs-cluster-ctl version: ${version}`);
                             resolve(true); // Resolve the promise here
                         } catch (e) {
@@ -263,7 +271,7 @@ export class InstallIPFS {
     
     async installIPFSClusterService(options = {}) {
         try {
-            const detect = execSync(`"${this.pathString}" which ipfs-cluster-service`).toString().trim();
+            const detect = execSync(`which ipfs-cluster-service`).toString().trim();
             if (detect) {
                 console.log('ipfs-cluster-service is already installed.');
                 return true;
@@ -291,17 +299,10 @@ export class InstallIPFS {
                     }).then(() => {
                         console.log('Extraction completed.');
                         const binPath = path.join(tmpDir, 'ipfs-cluster-service', 'ipfs-cluster-service');
-                        if(os.userInfo().username == "root") {
-                            execSync(`sudo mv ${binPath} /usr/local/bin/ipfs-cluster-service`);
-                        } else {
-                            execSync(`mv ${binPath} `+ this.thisDir  + `/bin/ipfs-cluster-service`);
-                        }
                         try {
                             // Verify installation
-                            const version = execSync(`"${this.pathString}" ipfs-cluster-service --version`).toString().trim();
-                            console.log(`Installed ipfs-cluster-service version: ${version}`);
-                            // if root user, write and enable systemd service
                             if (os.userInfo().username == "root") {
+                                execSync(`sudo mv ${binPath} /usr/local/bin/ipfs-cluster-service`);
                                 let serviceConfig = fs.readFileSync(path.join(thisDir, 'ipfs_clusterFollow.service')).toString();
                                 fs.writeFileSync('/etc/systemd/system/ipfs-cluster-follow.service', serviceConfig);
                                 execSync('systemctl enable ipfs-cluster-service');
@@ -311,9 +312,10 @@ export class InstallIPFS {
                             }
                             else{
                                 console.log('Please run as root user to enable systemd service');
-                                let tmpCommand2 = `cd ${tmpDir}/ipfs-cluster-service && cp ipfs-cluster-service `+ this.thisDir  + `/bin/ipfs-cluster-service && chmod +x `+ this.thisDir  + `/bin/ipfs-cluster-service`;
-                                execSync(tmpCommand2);
+                                execSync(`mv "${binPath}" "${this.thisDir}/bin/ipfs-cluster-service"`);
                             }
+                            const version = execSync(`ipfs-cluster-service --version`).toString().trim();
+                            console.log(`Installed ipfs-cluster-service version: ${version}`);
                             resolve(true); // Resolve the promise here
                         } catch (e) {
                             console.error('Error verifying ipfs-cluster-service installation:', e);
@@ -379,21 +381,20 @@ export class InstallIPFS {
                         execSync('sudo sysctl -w net.core.wmem_max=2500000');    
                     }
                     else{
-                        // TODO: Figure out if IPGET is still used. If so, fix the installation process. Try and create
-                        //       Portable installation that is in the repository so it doesn't require system install.
                         console.log('Please run as root user to install ipget globally');
-                        //FIXME: Fails because of permissions can't write into usr/local/bin as non-root user
-                        let tmpCommand = `cd ${tmpDir}/ipget && bash install.sh`;
-                        // FIXME: Fails because thisDir/bin/ipget doesn't exist? I thought CP should create it?
-                        let tmpCommand2 = `mkdir -p "`+ this.thisDir  + `/bin" && cd ${tmpDir}/ipget && cp ipget "`+ this.thisDir  + `/bin/ipget" && chmod +x "`+ this.thisDir  + `/bin/ipget"`;
-                        execSync(tmpCommand);
-                        execSync(tmpCommand2);
+                        //FIXME: Remove install move to bin and add to path 
+                        // let tmpCommand = `cd ${tmpDir}/ipget && bash install.sh`;
+                        // let tmpCommand2 = `mkdir -p "`+ this.thisDir  + `/bin" && cd ${tmpDir}/ipget && mv ipget "`+ this.thisDir  + `/bin/ipget" && chmod +x "`+ this.thisDir  + `/bin/ipget"`;
+                        execSync(`cd ${tmpDir}/ipget && mv ipget "${this.thisDir}/bin/" && chmod +x "${this.thisDir}/bin/ipget"`)
+                        
+                        // execSync(tmpCommand);
+                        // execSync(tmpCommand2);
                         // execSync(`cd ${tmpDir}/ipget && bash install.sh`);      
                     }
 
                     // Verify installation
                     try {
-                        const version = execSync(`"${this.pathString}" ipget --version`).toString().trim();
+                        const version = execSync(`ipget --version`).toString().trim();
                         console.log(`Installed ipget version: ${version}`);
                         resolve(true); // Resolve the promise here
                     } catch (verificationError) {
@@ -447,8 +448,9 @@ export class InstallIPFS {
                     //        error loading configurations: invalid character 'c' looking for beginning of object key string
                     //        When re-running the ipfs-cluster-service init -f manually it works fine the config is generated correctly.
                     const initClusterDaemon = `IPFS_PATH=${ipfsPath} ipfs-cluster-service init -f`;
-                    initClusterDaemonResults = execSync(`"${this.pathString}" initClusterDaemon`).toString();
-                    const configClusterDaemon = `cp ${this.thisDir}/service.json ${servicePath}/service.json`;
+                    // FIXME: This command isn't working
+                    initClusterDaemonResults = execSync(initClusterDaemon).toString();
+                    const configClusterDaemon = `cp "${this.thisDir}/service.json" "${servicePath}/service.json"`;
                     const configClusterDaemonResults = execSync(configClusterDaemon).toString();
                 }
                 results["initClusterDaemonResults"] = initClusterDaemonResults                
@@ -571,7 +573,7 @@ export class InstallIPFS {
         run_daemon = findDaemonResuls;
         try {
             // FIXME: This throws an error but i'm not sure if this is due to an install error or if i'm missing the peers etc.
-            let run_cluster_ctl_cmd =  `"${this.pathString}" ipfs-cluster-ctl peers ls`;       
+            let run_cluster_ctl_cmd =  `ipfs-cluster-ctl peers ls`;       
             run_cluster_ctl = execSync(run_cluster_ctl_cmd, { timeout: 5000 }).toString();
             console.log(run_cluster_ctl)
         } catch (error) {
@@ -1306,6 +1308,7 @@ async function main(){
             return true;
         }
         await runInstallationAndConfiguration();
+        return true;
     }else{
         async function runUninstall() {
             try {
@@ -1317,8 +1320,10 @@ async function main(){
         }
         
         await runUninstall();
+        return true;
     }
     
 }
 
 main();
+// process.exit(0);
