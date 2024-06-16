@@ -953,22 +953,22 @@ export class InstallIPFS {
         ipfsPath = path.join(ipfsPath, "ipfs");
         fs.mkdirSync(ipfsPath, { recursive: true });
 
-        const command = `IPFS_CLUSTER_PATH=${ipfsPath} ipfs-cluster-service`;
-        const process = exec(command);
+        const runIPFSClusterServiceCommand = `IPFS_CLUSTER_PATH=${ipfsPath} ipfs-cluster-service`;
+        const runIPFSClusterServiceCommandResults = exec(runIPFSClusterServiceCommand);
 
-        process.stdout.on('data', (data) => {
+        runIPFSClusterServiceCommandResults.stdout.on('data', (data) => {
             console.log(`stdout: ${data}`);
         });
 
-        process.stderr.on('data', (data) => {
+        runIPFSClusterServiceCommandResults.stderr.on('data', (data) => {
             console.error(`stderr: ${data}`);
         });
 
-        process.on('close', (code) => {
+        runIPFSClusterServiceCommandResults.on('close', (code) => {
             console.log(`ipfs-cluster-service process exited with code ${code}`);
         });
 
-        return process;
+        return runIPFSClusterServiceCommandResults;
     }
 
     async runIPFSClusterCtl(options = {}) {
@@ -1066,10 +1066,11 @@ export class InstallIPFS {
             if (pids) {
                 execSync(`pkill -f '${pattern}'`);
             }
-            return true;
         } catch (error) {
             console.error(`Failed to kill process with pattern ${pattern}: ${error}`);
             return false;
+        } finally{
+            return true;
         }
     }
 
@@ -1118,11 +1119,11 @@ export class InstallIPFS {
         }
     }
 
-    async removeBinariesSync(binPath, binaries) {
+    async removeBinariesSync(binPath, binList) {
         // Recursive removal using rmSync in newer Node.js versions, for older versions consider rimraf package
         // FIXME: Need elevated permissions to remove binaries from /usr/local/bin
         try {
-            for (const binary of binaries) {
+            for (const binary of binList) {
                 const filePath = path.join(binPath, binary);
                 fs.rmSync(filePath, { force: true });
             }
@@ -1142,7 +1143,8 @@ export class InstallIPFS {
         await this.removeBinariesSync('/usr/local/bin', ['ipfs', 'ipget', 'ipfs-cluster-service', 'ipfs-cluster-ctl']);
         return true;
     }
-
+    // NOTE: check that fregg implemented this correctly.
+    
     async testUninstall(options = {}) {
         if (['leecher', 'worker', 'master'].includes(this.role)) {
             this.uninstallIPFS();
