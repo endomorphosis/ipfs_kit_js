@@ -27,9 +27,9 @@ export class InstallIPFS {
         this.env = process.env;
         // Appends the project-bin directory to the path
         this.path = process.env.PATH;
-        console.log(this.path)
+        // console.log(this.path)
         this.path = this.path + ":" + path.join(this.thisDir, "bin");
-        console.log(this.path)
+        // console.log(this.path)
         // Set the path variable to the newly appended path
         process.env.PATH = this.path;
 
@@ -38,6 +38,7 @@ export class InstallIPFS {
         this.ipfs_follow_dist_tar = "https://dist.ipfs.tech/ipfs-cluster-follow/v1.0.8/ipfs-cluster-follow_v1.0.8_linux-amd64.tar.gz";
         this.ipfs_cluster_dist_tar = "https://dist.ipfs.tech/ipfs-cluster-ctl/v1.0.8/ipfs-cluster-ctl_v1.0.8_linux-amd64.tar.gz";
         this.ipfs_cluster_service_dist_tar = "https://dist.ipfs.tech/ipfs-cluster-service/v1.0.8/ipfs-cluster-service_v1.0.8_linux-amd64.tar.gz";
+        this.ipfs_ipget_dist_tar = "https://dist.ipfs.tech/ipget/v0.10.0/ipget_v0.10.0_linux-amd64.tar.gz";
         if (meta !== null) {
             this.config = meta.config ? meta.config : null;
             this.secret = meta.secret ? meta.secret : null;
@@ -170,7 +171,6 @@ export class InstallIPFS {
                     file.on('finish', () => {
                         file.close();
                         console.log('Download completed.');
-
                         // Extracting tarball
                         tar.x({
                             file: tarPath,
@@ -179,9 +179,6 @@ export class InstallIPFS {
                             console.log('Extraction completed.');
                             const binPath = path.join(tmpDir, 'ipfs-cluster-follow', 'ipfs-cluster-follow');
                             try {
-                                // Verify installation
-                                const version = execSync('ipfs-cluster-follow --version').toString().trim();
-                                console.log(`Installed ipfs-cluster-follow version: ${version}`);
                                 if (os.userInfo().username == "root") {
                                     execSync(`sudo mv ${binPath} /usr/local/bin/ipfs-cluster-follow`);
                                     let serviceConfig = fs.readFileSync(path.join(thisDir, 'ipfs_clusterFollow.service')).toString();
@@ -193,6 +190,10 @@ export class InstallIPFS {
                                     // FIXME: Add non root user install ( move to thisDir/bin/ipfs-cluster-follow and add path)
                                     console.log('Please run as root user to enable systemd service');
                                 }
+                             // Verify installation
+                             const version = execSync('ipfs-cluster-follow --version').toString().trim();
+                             console.log(`Installed ipfs-cluster-follow version: ${version}`);
+
                             } catch (e) {
                                 console.error('Error verifying ipfs-cluster-follow installation:', e);
                                 return false;
@@ -225,8 +226,8 @@ export class InstallIPFS {
     
         const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ipfs-cluster-ctl-'));
         const tarPath = path.join(tmpDir, 'ipfs-cluster-ctl.tar.gz');
-        const url = "https://dist.ipfs.tech/ipfs-cluster-ctl/v1.0.8/ipfs-cluster-ctl_v1.0.8_linux-amd64.tar.gz";
-    
+        // const url = "https://dist.ipfs.tech/ipfs-cluster-ctl/v1.0.8/ipfs-cluster-ctl_v1.0.8_linux-amd64.tar.gz";
+        const url = this.ipfs_cluster_dist_tar;
         // Download and extract the tarball
         const file = fs.createWriteStream(tarPath);
         return new Promise((resolve, reject) => {
@@ -282,7 +283,8 @@ export class InstallIPFS {
     
         const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ipfs-cluster-service-'));
         const tarPath = path.join(tmpDir, 'ipfs-cluster-service.tar.gz');
-        const url = "https://dist.ipfs.tech/ipfs-cluster-service/v1.0.8/ipfs-cluster-service_v1.0.8_linux-amd64.tar.gz";
+        const url = this.ipfs_cluster_service_dist_tar;
+        // const url = "https://dist.ipfs.tech/ipfs-cluster-service/v1.0.8/ipfs-cluster-service_v1.0.8_linux-amd64.tar.gz";
         let thisDir = this.thisDir || decodeURI(path.dirname(new URL(import.meta.url).pathname));
     
         // Download and extract the tarball
@@ -351,67 +353,63 @@ export class InstallIPFS {
         // Prepare for download and extraction
         const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ipget-'));
         const tarPath = path.join(tmpDir, 'ipget.tar.gz');
-        const url = "https://dist.ipfs.tech/ipget/v0.10.0/ipget_v0.10.0_linux-amd64.tar.gz";
-    
+        // const url = "https://dist.ipfs.tech/ipget/v0.10.0/ipget_v0.10.0_linux-amd64.tar.gz";
+        const url = this.ipfs_ipget_dist_tar;
        // Download the tarball
-    return new Promise((resolve, reject) => {
-        https.get(url, (response) => {
-            const fileStream = fs.createWriteStream(tarPath);
-            response.pipe(fileStream);
-            fileStream.on('finish', () => {
-                fileStream.close();
-                console.log('Downloaded ipget tarball.');
-
-                // Extract the tarball
-                tar.x({
-                    file: tarPath,
-                    C: tmpDir,
-                }).then(() => {
-                    console.log('Extracted ipget.');
-
-                    // Move to bin and install
-                    if (os.userInfo().username == "root") {
-                        const binPath = path.join(tmpDir, 'ipget', 'ipget');
-                        execSync(`sudo mv ${binPath} /usr/local/bin/ipget`);
-                        const installScriptPath = path.join(tmpDir, 'ipget', 'install.sh');
-                        execSync(`cd ${tmpDir}/ipget && sudo bash install.sh`);
-
-                        // Update system settings
-                        execSync('sudo sysctl -w net.core.rmem_max=2500000');
-                        execSync('sudo sysctl -w net.core.wmem_max=2500000');    
-                    }
-                    else{
-                        console.log('Please run as root user to install ipget globally');
-                        //FIXME: Remove install move to bin and add to path 
-                        // let tmpCommand = `cd ${tmpDir}/ipget && bash install.sh`;
-                        // let tmpCommand2 = `mkdir -p "`+ this.thisDir  + `/bin" && cd ${tmpDir}/ipget && mv ipget "`+ this.thisDir  + `/bin/ipget" && chmod +x "`+ this.thisDir  + `/bin/ipget"`;
-                        execSync(`cd ${tmpDir}/ipget && mv ipget "${this.thisDir}/bin/" && chmod +x "${this.thisDir}/bin/ipget"`)
-                        
-                        // execSync(tmpCommand);
-                        // execSync(tmpCommand2);
-                        // execSync(`cd ${tmpDir}/ipget && bash install.sh`);      
-                    }
-
-                    // Verify installation
-                    try {
-                        const version = execSync(`ipget --version`).toString().trim();
-                        console.log(`Installed ipget version: ${version}`);
-                        resolve(true); // Resolve the promise here
-                    } catch (verificationError) {
-                        console.error('Error verifying ipget installation:', verificationError);
-                        reject(verificationError); // Reject the promise if there's an error
-                    }
-                }).catch((extractionError) => {
-                    console.error('Error extracting ipget:', extractionError);
-                    reject(extractionError); // Reject the promise if there's an error
+        return new Promise((resolve, reject) => {
+            https.get(url, (response) => {
+                const fileStream = fs.createWriteStream(tarPath);
+                response.pipe(fileStream);
+                fileStream.on('finish', () => {
+                    fileStream.close();
+                    console.log('Downloaded ipget tarball.');
+                    // Extract the tarball
+                    tar.x({
+                        file: tarPath,
+                        C: tmpDir,
+                    }).then(() => {
+                        console.log('Extracted ipget.');
+                        // Move to bin and install
+                        if (os.userInfo().username == "root") {
+                            const binPath = path.join(tmpDir, 'ipget', 'ipget');
+                            execSync(`sudo mv ${binPath} /usr/local/bin/ipget`);
+                            const installScriptPath = path.join(tmpDir, 'ipget', 'install.sh');
+                            execSync(`cd ${tmpDir}/ipget && sudo bash install.sh`);
+                            // Update system settings
+                            execSync('sudo sysctl -w net.core.rmem_max=2500000');
+                            execSync('sudo sysctl -w net.core.wmem_max=2500000');    
+                        }
+                        else{
+                            console.log('Please run as root user to install ipget globally');
+                            //FIXME: Remove install move to bin and add to path 
+                            // let tmpCommand = `cd ${tmpDir}/ipget && bash install.sh`;
+                            // let tmpCommand2 = `mkdir -p "`+ this.thisDir  + `/bin" && cd ${tmpDir}/ipget && mv ipget "`+ this.thisDir  + `/bin/ipget" && chmod +x "`+ this.thisDir  + `/bin/ipget"`;
+                            execSync(`cd ${tmpDir}/ipget && mv ipget "${this.thisDir}/bin/" && chmod +x "${this.thisDir}/bin/ipget"`)
+                            
+                            // execSync(tmpCommand);
+                            // execSync(tmpCommand2);
+                            // execSync(`cd ${tmpDir}/ipget && bash install.sh`);      
+                        }
+                        // Verify installation
+                        try {
+                            const version = execSync(`ipget --version`).toString().trim();
+                            console.log(`Installed ipget version: ${version}`);
+                            resolve(true); // Resolve the promise here
+                        } catch (verificationError) {
+                            console.error('Error verifying ipget installation:', verificationError);
+                            reject(verificationError); // Reject the promise if there's an error
+                        }
+                    }).catch((extractionError) => {
+                        console.error('Error extracting ipget:', extractionError);
+                        reject(extractionError); // Reject the promise if there's an error
+                    });
                 });
+            }).on('error', (downloadError) => {
+                console.error('Error downloading ipget:', downloadError);
+                reject(downloadError); // Reject the promise if there's an error
             });
-        }).on('error', (downloadError) => {
-            console.error('Error downloading ipget:', downloadError);
-            reject(downloadError); // Reject the promise if there's an error
         });
-    });
-}
+    }
     // FIXME: This returns null 
     async configIPFSClusterService(options = {}) {
         let clusterName = options.clusterName || this.clusterName;
@@ -443,15 +441,15 @@ export class InstallIPFS {
                     const results0 = execSync(command0, { shell: true });
                     const initClusterDaemon = `IPFS_PATH=${ipfsPath} ipfs-cluster-service init -f`;
                     initClusterDaemonResults = execSync(initClusterDaemon, { shell: true }).toString();
+                    const configClusterDaemon = `cp "${this.thisDir}/service.json" "${servicePath}/service.json"`;
+                    const configClusterDaemonResults = execSync(configClusterDaemon).toString();
                 } else {
                     // FIXME: Generating the config goes wrong here.
                     //        error loading configurations: invalid character 'c' looking for beginning of object key string
                     //        When re-running the ipfs-cluster-service init -f manually it works fine the config is generated correctly.
                     const initClusterDaemon = `IPFS_PATH=${ipfsPath} ipfs-cluster-service init -f`;
-                    // FIXME: This command isn't working
                     initClusterDaemonResults = execSync(initClusterDaemon).toString();
-                    const configClusterDaemon = `cp "${this.thisDir}/service.json" "${servicePath}/service.json"`;
-                    const configClusterDaemonResults = execSync(configClusterDaemon).toString();
+
                 }
                 results["initClusterDaemonResults"] = initClusterDaemonResults                
             }
@@ -672,7 +670,7 @@ export class InstallIPFS {
                 }
 
                 if (os.userInfo().username == "root") {
-                    let serviceFile = fs.readFileSync(path.join(thisDir, 'ipfs_clusterFollow.service')).toString();
+                    let serviceFile = fs.readFileSync(path.join(thisDir, 'ipfs_cluster-follow.service')).toString();
                     let new_service = serviceFile.replace("ExecStart=/usr/local/bin/ipfs-cluster-follow run","ExecStart=/usr/local/bin/ipfs-cluster-follow "+ clusterName + " run")
                     new_service = new_service.replace("Description=IPFS Cluster Follow","Description=IPFS Cluster Follow "+ clusterName)
                     fs.writeFileSync("/etc/systemd/system/ipfs-cluster-follow@"+clusterName+".service", new_service)
