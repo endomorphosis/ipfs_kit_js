@@ -794,6 +794,7 @@ export class InstallIPFS {
                 execSync(`IPFS_PATH=${ipfsPath} ipfs config profile apply badgerds`);
 
                 // Calculate available disk space and adjust storage allocation
+                // NOTE: test diskAvailable to ensure that there is correct formatting. 
                 let diskAvailable = parseFloat(diskStats.disk_avail);
                 let minFreeSpace = 32 * 1024 * 1024 * 1024; // 32 GB
                 if (diskAvailable > minFreeSpace) {
@@ -818,12 +819,14 @@ export class InstallIPFS {
                     const new_service_text = original_service.replace("ExecStart=","ExecStart= bash -c \"export IPFS_PATH="+ ipfsPath + " && ");
                     fs.writeFileSync("/etc/systemd/system/ipfs.service", new_service_text);
                 }
-
-                results.config = execSync(`IPFS_PATH=${ipfsPath} ipfs config show`).toString();
+                
+                config_data = execSync(`IPFS_PATH=${ipfsPath} ipfs config show`).toString();
+                
+                results.config = config_data
                 results.identity = peerId.ID;
                 results.public_key = peerId.PublicKey
-                results.AgentVersion = peerId.AgentVersion
-                results.Addresses = peerId.Addresses
+                results.agent_version = peerId.AgentVersion
+                results.addresses = peerId.Addresses
             } catch (error) {
                 console.error('Error configuring IPFS:', error);
             }
@@ -831,14 +834,13 @@ export class InstallIPFS {
         if (os.userInfo().username == "root") {
             try {
                 // Reload daemon
-                let reloadDaemon = "systemctl daemon-reload";
-                let reloadDaemonResults = execSync(reloadDaemon);
+                let reloadDaemonCmd = "systemctl daemon-reload";
+                let reloadDaemonResults = execSync(reloadDaemonCmd);
 
                 // Enable service 
                 let enableDaemon = "systemctl enable ipfs";
                 let enableDaemonResults = execSync(enableDaemon);
-
-
+                // NOTE: make sure fregg handled the systemctl commands correctly.
                 // Check if daemon is running
                 let findDaemon = "ps -ef | grep ipfs | grep daemon | grep -v grep | wc -l";
                 let findDaemonResuls = execSync(findDaemon).toString();
@@ -849,6 +851,12 @@ export class InstallIPFS {
                 // Start daemon
                 let startDaemon = "systemctl start ipfs";
                 let startDaemonResults = execSync(startDaemon);
+
+                findDaemonResuls = execSync(findDaemon).toString();
+                if (parseInt(findDaemonResuls) > 0) {
+                    execSync("systemctl stop ipfs");
+                    let findDaemonResuls = execSync(findDaemon).toString();
+                }   
 
                 if (parseInt(findDaemonResuls) ==  0) {
                     // Downloads image from ipfs as a test
@@ -899,7 +907,7 @@ export class InstallIPFS {
             await new Promise(resolve => setTimeout(resolve, 2000));
             findDaemon = "ps -ef | grep ipfs | grep daemon | grep -v grep | wc -l";
             findDaemonResuls = execSync(findDaemon).toString();
-            run_daemon = run_daemon.stderr.read();
+            run_daemon_results = run_daemon.stderr.read();
             try{
                 // Start the daemon
                 let testDaemon = `bash -c 'IPFS_PATH=${ipfsPath} ipfs cat /ipfs/QmSgvgwxZGaBLqkGyWemEDqikCqU52XxsYLKtdy3vGZ8uq' > ${ipfsPath}/test.jpg`;
@@ -929,7 +937,7 @@ export class InstallIPFS {
             identity = results.identity ;
             config = JSON.parse(results.config.replace("\n", ""));
             public_key = results.public_key;
-            ipfs_daemon = run_daemon;
+            ipfs_daemon = run_daemon_results;
         }
         results = {
             "config": config,
