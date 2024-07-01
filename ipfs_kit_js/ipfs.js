@@ -573,7 +573,7 @@ export class ipfs {
         let detect = null;
         try {
             detect = await new Promise((resolve, reject) => {
-                exec(`export IPFS_PATH=${this.ipfsPath}ipfs/ && ` + "which ipfs", (error, stdout, stderr) => {
+                exec(`export IPFS_PATH=${this.ipfsPath}/ && ` + this.pathString +  "which ipfs", (error, stdout, stderr) => {
                     if (error) {
                         reject(error.message);
                     } else {

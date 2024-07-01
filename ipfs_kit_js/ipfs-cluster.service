@@ -1,9 +1,9 @@
 [Unit]
-Description=IPFS Cluster Follow Daemon
+Description=IPFS Cluster Daemon
 After=network.target
 
 [Service]
-ExecStart=
+ExecStart=ipfs-cluster-service daemon
 Restart=on-failure
 User=root
 Group=root
