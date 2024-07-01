@@ -8,7 +8,7 @@ import process from 'process';
 import { ChildProcess } from 'child_process';
 import { spawnSync } from 'child_process';
 import { spawn } from 'child_process';
-import { run } from 'shutil';
+import { run } from 'shutil'
 import { randomUUID } from 'crypto';
 import crypto from 'crypto';
 import https from 'https';
@@ -114,12 +114,12 @@ export class InstallIPFS {
     async installIPFSDaemon(options = {}) {
         let detect = '';
         try {
-            detect = execSync("which ipfs").toString().trim();
+            detect = execSync(this.pathString + " which ipfs").toString().trim();
             if (detect.length > 0) {
                 return true;
             }
         } catch (e) {
-            console.error(e.message);
+            // console.error(e.message);
             detect = '';
         }
         let thisDir = this.thisDir || decodeURI(path.dirname(new URL(import.meta.url).pathname));
@@ -214,8 +214,9 @@ export class InstallIPFS {
     }
     
     async installIPFSClusterCtl(options = {}) {
+
         try {
-            const detect = execSync(`"${this.pathString}" which ipfs-cluster-ctl`).toString().trim();
+            const detect = execSync(this.pathString  +` which ipfs-cluster-ctl`).toString().trim();
             if (detect) {
                 console.log('ipfs-cluster-ctl is already installed.');
                 return true;
@@ -347,7 +348,7 @@ export class InstallIPFS {
                 return true;
             }
         } catch (e) {
-            console.error(e.message);
+            // console.error(e.message);
         }
     
         // Prepare for download and extraction
@@ -754,6 +755,7 @@ export class InstallIPFS {
         let run_daemon
         let public_key
         let ipfs_daemon
+        let run_daemon_results
         if (!diskStats) throw new Error("diskStats is None");
         if (!ipfsPath) throw new Error("ipfsPath is None");
 
@@ -820,7 +822,7 @@ export class InstallIPFS {
                     fs.writeFileSync("/etc/systemd/system/ipfs.service", new_service_text);
                 }
                 
-                config_data = execSync(`IPFS_PATH=${ipfsPath} ipfs config show`).toString();
+                let config_data = execSync(`IPFS_PATH=${ipfsPath} ipfs config show`).toString();
                 
                 results.config = config_data
                 results.identity = peerId.ID;
@@ -888,10 +890,23 @@ export class InstallIPFS {
             let findDaemon = "ps -ef | grep ipfs | grep daemon | grep -v grep | wc -l";
             let findDaemonResuls = execSync(findDaemon).toString();
             if (parseInt(findDaemonResuls) > 0) {
-                execSync("ps -ef | grep ipfs | grep daemon | grep -v grep | awk '{print $2}' | xargs kill -9");
+                let pids = execSync("ps -ef | grep ipfs | grep daemon | grep -v grep | awk '{print $2}' ").toString().split("\n");
+                let pids_by_user = execSync("ps -ef | grep ipfs | grep daemon | grep -v grep | awk '{print $1}' ").toString().split("\n");
+                let this_user = os.userInfo().username;
+                for (let i = 0; i < pids.length; i++) {
+                    if (pids_by_user[i] == this_user) {
+                        if (pids[i] != "") {
+                            execSync(`kill -9 ${pids[i]}`);
+                        }
+                    }
+                    else {
+                        console.log("ipfs daemon is running by another user");
+                    }
+                }
+
                 findDaemonResuls = execSync(findDaemon).toString();
             }
-            let run_daemon_cmd = `IPFS_PATH=${ipfsPath} ipfs daemon --enable-pubsub-experiment --enable-gc`;
+            let run_daemon_cmd = this.pathString + ` IPFS_PATH=${ipfsPath} ipfs daemon --enable-pubsub-experiment --enable-gc`;
             run_daemon = exec(
                 run_daemon_cmd,
                 (error, stdout, stderr) => {
@@ -1316,7 +1331,9 @@ async function main(){
             return true;
         }
         await runInstallationAndConfiguration();
+        process.exit(0);
         return true;
+
     }else{
         async function runUninstall() {
             try {
@@ -1328,10 +1345,13 @@ async function main(){
         }
         
         await runUninstall();
+        process.exit(0);
         return true;
+
     }
     
 }
 
-main();
-// process.exit(0);
+if (import.meta.url === import.meta.url) {
+    main();
+}

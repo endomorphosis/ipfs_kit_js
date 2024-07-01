@@ -5,31 +5,23 @@ import path from 'path';
 
 export class ipfs {
     constructor(resources, meta) {
-        if (meta !== null) {
-            if ('config' in meta) {
-                if (meta['config'] !== null) {
-                    this.config = meta['config'];
+        if (meta !== null && typeof meta === 'object') {
+            if (meta.includes('config') && meta['config'] !== null) {
+                this.config = meta['config'];
+            }
+            if (meta.includes('role') && meta['role'] !== null) {
+                this.role = meta['role'];
+                if (!['master', 'worker', 'leecher'].includes(this.role)) {
+                    throw new Error('role is not either master, worker, leecher');
+                } else {
+                    this.role = 'leecher';
                 }
             }
-            if ('role' in meta) {
-                if (meta['role'] !== null) {
-                    this.role = meta['role'];
-                    if (!['master', 'worker', 'leecher'].includes(this.role)) {
-                        throw new Error('role is not either master, worker, leecher');
-                    } else {
-                        this.role = 'leecher';
-                    }
-                }
+            if (meta.includes('cluster_name') && meta['cluster_name'] !== null) {
+                this.cluster_name = meta['cluster_name'];
             }
-            if ('cluster_name' in meta) {
-                if (meta['cluster_name'] !== null) {
-                    this.cluster_name = meta['cluster_name'];
-                }
-            }
-            if ('ipfs_path' in meta) {
-                if (meta['ipfs_path'] !== null) {
+            if (meta.includes('ipfs_path') && meta['ipfs_path'] !== null) {
                     this.ipfsPath = meta['ipfs_path'];
-                }
             }
             if (this.role === 'leecher' || this.role === 'worker' || this.role === 'master') {
                 this.commands = {};
@@ -581,7 +573,7 @@ export class ipfs {
         let detect = null;
         try {
             detect = await new Promise((resolve, reject) => {
-                exec("which ipfs", (error, stdout, stderr) => {
+                exec(`export IPFS_PATH=${this.ipfsPath}ipfs/ && ` + "which ipfs", (error, stdout, stderr) => {
                     if (error) {
                         reject(error.message);
                     } else {
@@ -682,4 +674,19 @@ export class ipfs {
         }
     }
 
+}
+
+
+// create a test that runs only if the script is run directly, and it is an es Module without require
+
+if (import.meta.url === import.meta.url) {
+    const meta = {
+        role: "master",
+        clusterName: "cloudkit_storage",
+        clusterLocation: "/ip4/167.99.96.231/tcp/9096/p2p/12D3KooWKw9XCkdfnf8CkAseryCgS3VVoGQ6HUAkY91Qc6Fvn4yv",
+        secret: "96d5952479d0a2f9fbf55076e5ee04802f15ae5452b5faafc98e2bd48cf564d3",
+    };
+    const ipfs_instance = new ipfs();
+    const test_ipfs = await ipfs_instance.test_ipfs();
+    console.log(test_ipfs);
 }
