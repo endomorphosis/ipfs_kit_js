@@ -107,8 +107,8 @@ export class ipget {
 }
 
 // create a test that runs only if the script is run directly, and it is an es Module without require
-if (import.meta.url === import.meta.url) {
-    const ipget_instance = new ipget();
-    const test_ipget = await ipget_instance.test_ipget();
-    console.log(test_ipget);
-}
+// if (import.meta.url === import.meta.url) {
+//     const ipget_instance = new ipget();
+//     const test_ipget = await ipget_instance.test_ipget();
+//     console.log(test_ipget);
+// }
