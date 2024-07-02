@@ -3,7 +3,14 @@ import { execSync } from 'child_process';
 
 export class IpfsClusterService {
     constructor(resources, meta = null) {
-        this.role = "leecher";
+        this.thisDir = path.dirname(import.meta.url);
+        if (this.thisDir.startsWith("file://")) {
+            this.thisDir = this.thisDir.replace("file://", "");
+        }
+        this.path = process.env.PATH;
+        this.path = this.path + ":" + path.join(this.this_dir, "bin")
+        this.pathString = "PATH="+ this.path
+
         if (meta !== null) {
             if ('config' in meta && meta['config'] !== null) {
                 this.config = meta['config'];

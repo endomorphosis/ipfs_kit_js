@@ -5,6 +5,13 @@ import path from 'path';
 
 export class ipfs {
     constructor(resources, meta) {
+        this.thisDir = path.dirname(import.meta.url);
+        if (this.thisDir.startsWith("file://")) {
+            this.thisDir = this.thisDir.replace("file://", "");
+        }
+        this.path = process.env.PATH;
+        this.path = this.path + ":" + path.join(this.this_dir, "bin")
+        this.pathString = "PATH="+ this.path
         if (meta !== null && typeof meta === 'object') {
             if (meta.includes('config') && meta['config'] !== null) {
                 this.config = meta['config'];

@@ -22,18 +22,14 @@ export class InstallIPFS {
     constructor(resources, meta = null) {
         this.resources = resources;
         this.meta = meta;
-        this.thisDir = decodeURI(path.dirname(new URL(import.meta.url).pathname));
-        this.ipfsTestInstall = this.ipfsTestInstall.bind(this);
-        this.env = process.env;
-        // Appends the project-bin directory to the path
+        this.thisDir = path.dirname(import.meta.url);
+        if (this.thisDir.startsWith("file://")) {
+            this.thisDir = this.thisDir.replace("file://", "");
+        }
         this.path = process.env.PATH;
-        // console.log(this.path)
-        this.path = this.path + ":" + path.join(this.thisDir, "bin");
-        // console.log(this.path)
-        // Set the path variable to the newly appended path
-        process.env.PATH = this.path;
-
-        this.pathString = `PATH=${this.path} `;
+        this.path = this.path + ":" + path.join(this.this_dir, "bin")
+        this.pathString = "PATH="+ this.path
+        this.ipfsTestInstall = this.ipfsTestInstall.bind(this);
         this.ipfs_dist_tar = "https://dist.ipfs.tech/kubo/v0.26.0/kubo_v0.26.0_linux-amd64.tar.gz";
         this.ipfs_follow_dist_tar = "https://dist.ipfs.tech/ipfs-cluster-follow/v1.0.8/ipfs-cluster-follow_v1.0.8_linux-amd64.tar.gz";
         this.ipfs_cluster_dist_tar = "https://dist.ipfs.tech/ipfs-cluster-ctl/v1.0.8/ipfs-cluster-ctl_v1.0.8_linux-amd64.tar.gz";

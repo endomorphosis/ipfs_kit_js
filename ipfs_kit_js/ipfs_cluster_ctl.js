@@ -1,8 +1,14 @@
 export class IPFSClusterCtl {
     constructor(resources, meta = null) {
         this.config = {};
-        this.role = "leecher"; // Default role
-
+        this.thisDir = path.dirname(import.meta.url);
+        if (this.thisDir.startsWith("file://")) {
+            this.thisDir = this.thisDir.replace("file://", "");
+        }
+        this.path = process.env.PATH;
+        this.path = this.path + ":" + path.join(this.this_dir, "bin")
+        this.pathString = "PATH="+ this.path
+        
         if (meta !== null) {
             if ("config" in meta && meta['config'] !== null) {
                 this.config = meta['config'];

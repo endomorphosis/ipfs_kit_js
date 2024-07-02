@@ -6,8 +6,16 @@ import * as install_ipfs from './install_ipfs.js';
 
 export class IPFSClusterFollow {
     constructor(resources, meta) {
-        // Default values
+        this.thisDir = path.dirname(import.meta.url);
+        if (this.thisDir.startsWith("file://")) {
+            this.thisDir = this.thisDir.replace("file://", "");
+        }
+        this.path = process.env.PATH;
+        this.path = this.path + ":" + path.join(this.this_dir, "bin")
+        this.pathString = "PATH="+ this.path
+
         this.config = {};
+
         this.role = 'leecher'; // default role
         this.clusterName = '';
 

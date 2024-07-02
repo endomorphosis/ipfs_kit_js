@@ -2,7 +2,13 @@ import { execSync } from 'child_process';
 
 export class TestFio {
     constructor(resources, meta = null) {
-        // constructor body
+        this.thisDir = path.dirname(import.meta.url);
+        if (this.thisDir.startsWith("file://")) {
+            this.thisDir = this.thisDir.replace("file://", "");
+        }
+        this.path = process.env.PATH;
+        this.path = this.path + ":" + path.join(this.this_dir, "bin")
+        this.pathString = "PATH="+ this.path
     }
 
     call(method, kwargs = {}) {
