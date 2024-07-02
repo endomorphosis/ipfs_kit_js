@@ -1,4 +1,5 @@
 import { execSync } from 'child_process';
+import { exec } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 
@@ -9,7 +10,7 @@ export class ipget {
             this.thisDir = this.thisDir.replace("file://", "");
         }
         this.path = process.env.PATH;
-        this.path = this.path + ":" + path.join(this.this_dir, "bin")
+        this.path = this.path + ":" + path.join(this.thisDir, "bin")
         this.pathString = "PATH="+ this.path
         if (meta !== null) {    
             if ('config' in meta) {
@@ -59,8 +60,11 @@ export class ipget {
         if (!fs.existsSync(path.dirname(kwargs.path))) {
             fs.mkdirSync(path.dirname(kwargs.path), { recursive: true });
         }
+        if (!fs.existsSync(kwargs.path)) {
+            fs.mkdirSync(kwargs.path);
+        }
         
-        const command = `export IPFS_PATH=${this.ipfsPath} && ipfs get ${kwargs.cid} -o ${kwargs.path}`;
+        const command = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString+ ` ipfs get ${kwargs.cid} -o ${kwargs.path}`;
         const process = exec(command);
 
         const start_time = Date.now();
@@ -90,7 +94,7 @@ export class ipget {
 
     async test_ipget() {
         try {
-            execSync('which ipget');
+            const which_ipget = execSync(this.pathString + ' which ipget').toString().trim();
             const ipget_download_object = await this.ipget_download_object({
                 cid: "QmccfbkWLYs9K3yucc6b3eSt8s8fKcyRRt24e3CDaeRhM1",
                 path: "/tmp/test"
