@@ -1,3 +1,9 @@
+import { exec, execSync } from "child_process";
+import fs from "fs";
+import os from "os";
+import path from "path";
+
+
 export class IPFSClusterCtl {
     constructor(resources, meta = null) {
         this.config = {};
@@ -6,7 +12,7 @@ export class IPFSClusterCtl {
             this.thisDir = this.thisDir.replace("file://", "");
         }
         this.path = process.env.PATH;
-        this.path = this.path + ":" + path.join(this.this_dir, "bin")
+        this.path = this.path + ":" + path.join(this.thisDir, "bin")
         this.pathString = "PATH="+ this.path
         
         if (meta !== null) {
@@ -50,7 +56,7 @@ export class IPFSClusterCtl {
         const results = files.map(file => {
             const relativePath = path.relative(dirPath, file);
             let argString = metadata[relativePath] ? ` --metadata ${metadata[relativePath]}` : "";
-            let command = `ipfs-cluster-ctl pin add ${file}${argString}`;
+            let command = this.pathString + ` ipfs-cluster-ctl pin add ${file}${argString}`;
             try {
                 const output = execSync(command).toString();
                 return output;
@@ -71,7 +77,7 @@ export class IPFSClusterCtl {
 
         const files = this.walkSync(dirPath);
         const results = files.map(file => {
-            let command = `ipfs-cluster-ctl pin rm ${file}`;
+            let command = this.pathString + ` ipfs-cluster-ctl pin rm ${file}`;
             try {
                 const output = execSync(command).toString();
                 return `Unpinned: ${file}`;
@@ -103,7 +109,7 @@ export class IPFSClusterCtl {
         const results = targets.map(target => {
             const relativePath = path.relative(dirPath, target);
             let argString = metadata[relativePath] ? ` --metadata ${metadata[relativePath]}` : "";
-            let command = `ipfs-cluster-ctl pin add -r ${target}${argString}`;
+            let command = this.pathString + ` ipfs-cluster-ctl pin add -r ${target}${argString}`;
 
             try {
                 const output = execSync(command, { encoding: 'utf-8' });
@@ -180,7 +186,7 @@ export class IPFSClusterCtl {
         const tempFile = path.join(os.tmpdir(), `pinset-${Date.now()}.txt`);
         try {
             // Redirect output of the command to the temporary file
-            execSync(`ipfs-cluster-ctl pin ls > ${tempFile}`);
+            execSync(this.pathString + ` ipfs-cluster-ctl pin ls > ${tempFile}`);
             
             // Read and parse the temporary file
             const fileData = fs.readFileSync(tempFile, 'utf8');
@@ -223,8 +229,8 @@ export class IPFSClusterCtl {
 
     ipfsClusterCtlStatus() {
         try {
-            const command = "ipfs-cluster-ctl status";
-            const results = execSync(command, { encoding: 'utf8' }); // Directly get the output as a string
+            const command = this.pathString + " ipfs-cluster-ctl status";
+            const results = execSync(command, { encoding: 'utf8' });
             return results;
         } catch (error) {
             console.error(`Error executing ipfs-cluster-ctl status: ${error.message}`);
@@ -234,7 +240,7 @@ export class IPFSClusterCtl {
 
     testIPFSClusterCtl() {
         return new Promise((resolve, reject) => {
-            exec("which ipfs-cluster-ctl", (error, stdout) => {
+            exec(this.pathString + " which ipfs-cluster-ctl", (error, stdout) => {
                 if (error) {
                     resolve(false);
                 } else {
@@ -245,7 +251,7 @@ export class IPFSClusterCtl {
     }
 }
 
-function main()
+function test()
 {
     (async () => {
         const thisIpfsClusterCtl = new IPFSClusterCtl();
@@ -260,4 +266,8 @@ function main()
         }
     })();
 
+}
+
+if (import.meta.url === import.meta.url) {
+    test();
 }

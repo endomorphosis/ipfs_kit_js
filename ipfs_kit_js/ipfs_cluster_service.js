@@ -1,5 +1,5 @@
  
-import { execSync } from 'child_process';
+import { exec, execSync } from 'child_process';
 
 export class IpfsClusterService {
     constructor(resources, meta = null) {
@@ -10,7 +10,6 @@ export class IpfsClusterService {
         this.path = process.env.PATH;
         this.path = this.path + ":" + path.join(this.this_dir, "bin")
         this.pathString = "PATH="+ this.path
-
         if (meta !== null) {
             if ('config' in meta && meta['config'] !== null) {
                 this.config = meta['config'];
@@ -27,7 +26,7 @@ export class IpfsClusterService {
     async test_ipfs_cluster_service() {
         let detect;
         try {
-            detect = execSync('which ipfs-cluster-service').toString();
+            detect = execSync(this.pathString + ' which ipfs-cluster-service').toString();
         } catch (error) {
             detect = '';
         }
@@ -35,26 +34,51 @@ export class IpfsClusterService {
     }
 
     async ipfs_cluster_service_start() {
-        const command = "systemctl start ipfs-cluster-service";
-        const results = execSync(command).toString();
-        return results;
+        if (os.userInfo().uid === 0) {
+            const command = this.pathString + " systemctl start ipfs-cluster-service";
+            const results = execSync(command).toString();
+            return results;
+        }
+        else{
+            const command = self.path_string + " ipfs-cluster-service daemon --bootstrap /ip4/167.99.96.231/tcp/9096/p2p/12D3KooWDYKMnVLKnP2SmM8umJEEKdhug93QYybmNUEiSe1Kwjmu"
+            const results = execSync(command).toString();
+            return results;
+        }
     }
 
     async ipfs_cluster_service_stop() {
-        const command = "systemctl stop ipfs-cluster-service";
-        const results = execSync(command).toString();
-        return results;
+        if (os.userInfo().uid === 0) {
+            const command = this.pathString + " systemctl stop ipfs-cluster-service";
+            const results = execSync(command).toString();
+            return results;
+        }
+        else{
+            const command = "ps -ef | grep ipfs-cluster-service | grep -v grep | awk '{print $2}' | xargs kill -9"
+            const results = execSync(command).toString();
+            return results;
+        }
     }
 
     async ipfs_cluster_service_status() {
-        const command = "ipfs-cluster-service status";
-        const results = execSync(command).toString();
-        return results;
+        if (os.userInfo().uid === 0) {
+            const command = this.pathString + " systemctl status ipfs-cluster-service";
+            const results = execSync(command).toString();
+            return results;
+        }
+        else{
+            const command = "ps -ef | grep ipfs-cluster-service | grep daemon | grep -v grep | wc -l"
+            const results = execSync(command).toString();
+            return results;
+        }
     }
 }
 
-async function main(){
+async function test(){
     const thisIpfsClusterService = new IpfsClusterService();
     const results = await thisIpfsClusterService.test_ipfs_cluster_service();
     console.log(results);
+}
+
+if (import.meta.url === import.meta.url) {
+    test();
 }

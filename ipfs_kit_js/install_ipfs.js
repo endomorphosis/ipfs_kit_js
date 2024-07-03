@@ -1302,7 +1302,7 @@ export class InstallIPFS {
 }
 // run this if the script is run directly
 
-async function main(){
+async function test(){
     const meta = {
         role: "master",
         clusterName: "cloudkit_storage",
