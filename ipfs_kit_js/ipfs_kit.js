@@ -1,8 +1,8 @@
-const { execSync } = require('child_process');
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
-const { promisify } = require('util');
+import { execSync } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+import { promisify } from 'util';
 
 const mkdir = promisify(fs.mkdir);
 const exists = promisify(fs.exists);

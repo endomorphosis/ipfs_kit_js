@@ -1,4 +1,7 @@
 import { execSync } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+
 
 export class TestFio {
     constructor(resources, meta = null) {
@@ -7,7 +10,7 @@ export class TestFio {
             this.thisDir = this.thisDir.replace("file://", "");
         }
         this.path = process.env.PATH;
-        this.path = this.path + ":" + path.join(this.this_dir, "bin")
+        this.path = this.path + ":" + path.join(this.thisDir, "bin")
         this.pathString = "PATH="+ this.path
     }
 
