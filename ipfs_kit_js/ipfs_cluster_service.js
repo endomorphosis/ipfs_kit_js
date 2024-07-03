@@ -1,5 +1,8 @@
  
 import { exec, execSync } from 'child_process';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 
 export class IpfsClusterService {
     constructor(resources, meta = null) {

@@ -74,7 +74,7 @@ export class IPFSClusterFollow {
         if (os.userInfo().uid != 0 || results.systemctl.includes('Error') || detectResults.length === 0) {
             try {            
                 // Attempt to run the ipfs-cluster-follow command
-                const commandRun = `/usr/local/bin/ipfs-cluster-follow ${clusterName} run`;
+                const commandRun = this.pathString + ` ipfs-cluster-follow ${clusterName} run`;
                 const process = exec(commandRun, (error, stdout, stderr) => {
                     if (error) {
                         console.error(`Error running ipfs-cluster-follow: ${error.message}`);
@@ -157,7 +157,7 @@ export class IPFSClusterFollow {
     }
 
     async ipfsFollowList(clusterName = this.clusterName) {
-        let command = `ipfs-cluster-follow ${clusterName} list`;
+        let command = this.pathString + ` ipfs-cluster-follow ${clusterName} list`;
 
         try {
             let results = execSync(command, { encoding: 'utf8' }).trim();
@@ -195,7 +195,7 @@ export class IPFSClusterFollow {
         let resultsDict = {};
 
         try {
-            const command = `ipfs-cluster-follow ${clusterName} info`;
+            const command = this.pathString + ` ipfs-cluster-follow ${clusterName} info`;
             let results = execSync(command, { encoding: 'utf8' }).trim().split("\n");
 
             if (results.length > 0) {
@@ -229,7 +229,7 @@ export class IPFSClusterFollow {
             cluster_name = kwargs['cluster_name'];
         }
 
-        const command = `ipfs-cluster-follow ${cluster_name} run`;
+        const command = this.pathString + ` ipfs-cluster-follow ${cluster_name} run`;
         let results = execSync(command).toString();
         results = results.split("\n");
         return results;
@@ -238,7 +238,7 @@ export class IPFSClusterFollow {
     async test_ipfs_cluster_follow() {
         let detect;
         try {
-            detect = execSync('which ipfs-cluster-follow').toString();
+            detect = execSync( this.pathString + ' which ipfs-cluster-follow').toString();
         } catch (error) {
             detect = '';
         }
@@ -247,7 +247,7 @@ export class IPFSClusterFollow {
 
 }
 
-async function main(){
+async function test(){
 
     const meta = {
         cluster_name: "test"
@@ -256,4 +256,8 @@ async function main(){
     const thisIpfsClusterFollow = new IpfsClusterFollow(meta);
     const results = await thisIpfsClusterFollow.test_ipfs_cluster_follow();
     console.log(results);
+}
+
+if (import.meta.url === import.meta.url) {
+    test();
 }
