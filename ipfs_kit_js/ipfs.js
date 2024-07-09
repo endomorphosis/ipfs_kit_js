@@ -731,6 +731,77 @@ export class ipfs {
             console.error(error);
         }
 
+        let test_stat_path = null;
+        try {
+            test_stat_path = await this.ipfs_stat_path();
+            console.log(test_stat_path);
+        } catch (error) {
+            test_stat_path = error;
+            console.error(error);
+        }
+
+        let test_name_resolve = null;
+        try {
+            test_name_resolve = await this.ipfs_name_resolve();
+            console.log(test_name_resolve);
+        } catch (error) {
+            test_name_resolve = error;
+            console.error(error);
+        }
+
+        let test_name_publish = null;
+        try {
+            test_name_publish = await this.ipfs_name_publish();
+            console.log(test_name_publish);
+        } catch (error) {
+            test_name_publish = error;
+            console.error(error);
+        }
+
+        let test_ls_path = null;
+        try {
+            test_ls_path = await this.ipfs_ls_path();
+            console.log(test_ls_path);
+        } catch (error) {
+            test_ls_path = error;
+            console.error(error);
+        }
+
+        let test_remove_pin = null;
+        try {
+            test_remove_pin = await this.ipfs_remove_pin();
+            console.log(test_remove_pin);
+        } catch (error) {
+            test_remove_pin = error;
+            console.error(error);
+        }
+
+        let test_stop_daemon = null;
+        try {
+            test_stop_daemon = await this.daemon_stop();
+            console.log(test_stop_daemon);
+        } catch (error) {
+            test_stop_daemon = error;
+            console.error(error);
+        }
+
+        let results = {
+            "which_ipfs": detect,
+            "daemon_start": test_daemon_start,
+            "ls_pin": test_ls_pin,
+            "add_pin": test_add_pin,
+            "get_pinset": test_get_pinset,
+            "add_path": test_add_path,
+            "remove_path": test_remove_path,
+            "stat_path": test_stat_path,
+            "name_resolve": test_name_resolve,
+            "name_publish": test_name_publish,
+            "ls_path": test_ls_path,
+            "remove_pin": test_remove_pin,
+            "daemon_stop": test_stop_daemon
+        };
+
+        return results;
     }
 
 }
