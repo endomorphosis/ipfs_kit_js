@@ -242,7 +242,41 @@ export class IPFSClusterFollow {
         } catch (error) {
             detect = '';
         }
-        return detect.length > 0;
+        
+        let test_follow_run = null;
+        try{
+            test_follow_run = await this.ipfs_follow_run();
+        }
+        catch(error){
+            console.error(error);
+            test_follow_run = error;
+        }
+
+        let test_follow_list = null;
+        try{
+            test_follow_list = await this.ipfsFollowList();
+        }
+        catch(error){
+            console.error(error);
+            test_follow_list = error;
+        }
+
+        let test_follow_info = null;
+        try{
+            test_follow_info = await this.ipfsFollowInfo();
+        }
+        catch(error){
+            console.error(error);
+            test_follow_info = error;
+        }
+
+        let results = {
+            "detect": detect,
+            "test_follow_run": test_follow_run,
+            "test_follow_list": test_follow_list,
+            "test_follow_info": test_follow_info
+        };
+        
     }
 
 }
@@ -252,7 +286,6 @@ async function test(){
     const meta = {
         cluster_name: "test"
     };
-
     const thisIpfsClusterFollow = new IpfsClusterFollow(meta);
     const results = await thisIpfsClusterFollow.test_ipfs_cluster_follow();
     console.log(results);

@@ -26,16 +26,6 @@ export class IpfsClusterService {
         }
     }
 
-    async test_ipfs_cluster_service() {
-        let detect;
-        try {
-            detect = execSync(this.pathString + ' which ipfs-cluster-service').toString();
-        } catch (error) {
-            detect = '';
-        }
-        return detect.length > 0;
-    }
-
     async ipfs_cluster_service_start() {
         if (os.userInfo().uid === 0) {
             const command = this.pathString + " systemctl start ipfs-cluster-service";
@@ -73,6 +63,39 @@ export class IpfsClusterService {
             const results = execSync(command).toString();
             return results;
         }
+    }
+
+    async test_ipfs_cluster_service() {
+        let detect;
+        try {
+            detect = execSync(this.pathString + ' which ipfs-cluster-service').toString();
+        } catch (error) {
+            detect = '';
+        }
+    
+        let test_service_start = null;
+        try{
+            test_service_start = await this.ipfs_cluster_service_start();
+        }
+        catch(error){
+            console.error(error);
+            test_service_start = error;
+        }
+        
+        let test_service_stop = null;
+        try{
+            test_service_stop = await this.ipfs_cluster_service_stop();
+        }
+        catch(error){
+            console.error(error);
+            test_service_stop = error;
+        }
+
+        let results = {
+            "detect": detect,
+            "test_service_start": test_service_start,
+            "test_service_stop": test_service_stop
+        };
     }
 }
 

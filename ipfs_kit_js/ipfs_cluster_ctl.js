@@ -47,7 +47,7 @@ export class IPFSClusterCtl {
         return fileList;
     }
 
-    ipfsClusterCtlAddPin(dirPath, metadata = {}) {
+    async ipfsClusterCtlAddPin(dirPath, metadata = {}) {
         if (!fs.existsSync(dirPath)) {
             throw new Error("Path not found");
         }
@@ -70,7 +70,7 @@ export class IPFSClusterCtl {
     }
 
 
-    ipfsClusterCtlRemovePin(dirPath) {
+    async ipfsClusterCtlRemovePin(dirPath) {
         if (!fs.existsSync(dirPath)) {
             throw new Error("Path not found");
         }
@@ -92,13 +92,13 @@ export class IPFSClusterCtl {
 
 
     // Simplified directory traversal for demonstration
-    getDirectories(basePath) {
+    async getDirectories(basePath) {
         return fs.readdirSync(basePath, { withFileTypes: true })
             .filter(dirent => dirent.isDirectory())
             .map(dirent => path.join(basePath, dirent.name));
     }
 
-    ipfsClusterCtlAddPinRecursive(dirPath, metadata = {}) {
+    async ipfsClusterCtlAddPinRecursive(dirPath, metadata = {}) {
         if (!fs.existsSync(dirPath)) {
             throw new Error("Path not found");
         }
@@ -124,7 +124,7 @@ export class IPFSClusterCtl {
     }
 
 
-    ipfs_cluster_ctl_execute(args) {
+    async ipfs_cluster_ctl_execute(args) {
         if (!this.options.includes(args[0])) {
             console.error(`"${args[0]}" is not a valid command.`);
             return;
@@ -181,7 +181,7 @@ export class IPFSClusterCtl {
     }
 
 
-    getPinset() {
+    async getPinset() {
         // Create a temporary file path
         const tempFile = path.join(os.tmpdir(), `pinset-${Date.now()}.txt`);
         try {
@@ -239,24 +239,27 @@ export class IPFSClusterCtl {
     }
 
     testIPFSClusterCtl() {
+        let detect = null;
+
         return new Promise((resolve, reject) => {
-            exec(this.pathString + " which ipfs-cluster-ctl", (error, stdout) => {
+            let detect_cmd = this.pathString + " which ipfs-cluster-ctl";
+            exec(detect_cmd, (error, stdout) => {
                 if (error) {
+                    detect = error;                    
                     resolve(false);
                 } else {
+                    detect = stdout.trim();
                     resolve(stdout.trim().length > 0);
                 }
             });
         });
+
     }
 }
 
 function test()
 {
     (async () => {
-        const thisIpfsClusterCtl = new IPFSClusterCtl();
-        const results = await thisIpfsClusterCtl.testIPFSClusterCtl();
-        console.log(results);
 
         if (results) {
             const status = thisIpfsClusterCtl.ipfsClusterCtlStatus();
@@ -264,6 +267,11 @@ function test()
         } else {
             console.log("ipfs-cluster-ctl is not installed.");
         }
+
+        const thisIpfsClusterCtl = new IPFSClusterCtl();
+        const results = await thisIpfsClusterCtl.testIPFSClusterCtl();
+        console.log(results);
+
     })();
 
 }
