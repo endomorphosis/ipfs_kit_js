@@ -10,7 +10,7 @@ export class ipfs {
             this.thisDir = this.thisDir.replace("file://", "");
         }
         this.path = process.env.PATH;
-        this.path = this.path + ":" + path.join(this.this_dir, "bin")
+        this.path = this.path + ":" + path.join(this.thisDir, "bin")
         this.pathString = "PATH="+ this.path
         if (meta !== null && typeof meta === 'object') {
             if (meta.includes('config') && meta['config'] !== null) {
@@ -576,28 +576,6 @@ export class ipfs {
         return result1;
     }
 
-    async test_ipfs() {
-        let detect = null;
-        try {
-            detect = await new Promise((resolve, reject) => {
-                exec(`export IPFS_PATH=${this.ipfsPath}/ && ` + this.pathString +  "which ipfs", (error, stdout, stderr) => {
-                    if (error) {
-                        reject(error.message);
-                    } else {
-                        resolve(stdout);
-                    }
-                });
-            });
-        } catch (error) {
-            detect = error.message;
-        }
-        if (detect && detect.length > 0) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
     async ipfs_execute(command, kwargs = {}) {
         if (typeof kwargs !== 'object') {
             throw new Error("kwargs must be an object");
@@ -681,8 +659,81 @@ export class ipfs {
         }
     }
 
-}
+    async test_ipfs() {
+        let detect = null;
+        try {
+            detect = await new Promise((resolve, reject) => {
+                let detect_cmd = `export IPFS_PATH=${this.ipfsPath}/ && ` + this.pathString +  " which ipfs";
+                exec( detect_cmd , (error, stdout, stderr) => {
+                    if (error) {
+                        reject(error.message);
+                    } else {
+                        resolve(stdout);
+                    }
+                });
+            });
+        } catch (error) {
+            detect = error;
+        }
 
+        let test_daemon_start = null;
+        try {
+            test_daemon_start = await this.daemon_start();
+            console.log(test_daemon_start);
+        }
+        catch (error) {
+            test_daemon_start = error;
+            console.error(error);
+        }
+
+        let test_ls_pin = null;
+        try {
+            test_ls_pin = await this.ipfs_ls_pin();
+            console.log(test_ls_pin);
+        } catch (error) {
+            test_ls_pin = error;
+            console.error(error);
+        }
+
+        let test_add_pin = null;
+        try{
+            test_add_pin = await this.ipfs_add_pin();
+            console.log(test_add);
+        } catch (error) {
+            test_add_pin = error;
+            console.error(error);
+        }
+
+        let test_get_pinset = null;
+        try {
+            test_get_pinset = await this.ipfs_get_pinset();
+            console.log(test_get_pinset);
+        } catch (error) {
+            test_get_pinset = error;
+            console.error(error);
+        }
+
+        let test_add_path = null;
+        try {
+            test_add_path = await this.ipfs_add_path();
+            console.log(test_add_path);
+        } catch (error) {
+            test_add_path = error;
+            console.error(error);
+        }
+
+        let test_remove_path = null;
+        try {
+            test_remove_path = await this.ipfs_remove_path();
+            console.log(test_remove_path);
+        } catch (error) {
+            test_remove_path = error;
+            console.error(error);
+        }
+
+    }
+
+}
 
 // create a test that runs only if the script is run directly, and it is an es Module without require
 
