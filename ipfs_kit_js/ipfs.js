@@ -196,20 +196,8 @@ export class ipfs {
             const hash = kwargs['hash'];
             let request1 = null;
             try {
-                request1 = await this.ipfs_execute({
-                    "command": "cat",
-                    "hash": hash
-                });
-            } catch (error) {
-                console.error(error);
-            }
-            if (request1 !== null) {
-                return request1;
-            }
-            let request2 = null;
-            try {
-                const command = `ipfs cat ${hash}`;
-                request2 = await new Promise((resolve, reject) => {
+                const command = this.pathString + ` ipfs cat ${hash}`;
+                request1 = await new Promise((resolve, reject) => {
                     exec(command, (error, stdout, stderr) => {
                         if (error) {
                             reject(error.message);
@@ -221,17 +209,19 @@ export class ipfs {
             } catch (error) {
                 console.error(error);
             }
-            if (request2 !== null) {
-                return request2;
+            if (request1 !== null) {
+                return request1;
             }
         }
-        throw new Error("hash not found");
+        else {
+            throw new Error("hash not found in kwargs");
+        }
     }
 
 
     async ipfsGetPinset(kwargs = {}) {
         const this_tempfile = path.join(os.tmpdir(), 'temp.txt');
-        const command = `export IPFS_PATH=${this.ipfsPath}ipfs/ && ` + this.pathString + ` ipfs pin ls -s > ${this_tempfile}`;
+        const command = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs pin ls -s > ${this_tempfile}`;
         await new Promise((resolve, reject) => {
             exec(command, (error, stdout, stderr) => {
                 if (error) {
@@ -254,10 +244,10 @@ export class ipfs {
     }
 
     async ipfsAddPin(pin, kwargs = {}) {
-        const dirname = path.dirname(__filename);
+        const dirname = this.thisDir;
         let result1;
         try {
-            const command1 = `export IPFS_PATH=${this.ipfsPath}ipfs/ && cd ${this.ipfsPath}ipfs/ && ` + this.pathString + ` ipfs pin add ${pin}`;
+            const command1 = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs pin add ${pin}`;
             result1 = await new Promise((resolve, reject) => {
                 exec(command1, (error, stdout, stderr) => {
                     if (error) {
@@ -279,7 +269,7 @@ export class ipfs {
         const results = [];
         for (let i = 0; i < this_path_split.length; i++) {
             this_path += this_path_split[i] + "/";
-            const command1 = `export IPFS_PATH=${this.ipfsPath}ipfs/ &&  ` + this.pathString + ` ipfs files mkdir ${this_path}`;
+            const command1 = `export IPFS_PATH=${this.ipfsPath} &&  ` + this.pathString + ` ipfs files mkdir ${this_path}`;
             const result1 = await new Promise((resolve, reject) => {
                 exec(command1, (error, stdout, stderr) => {
                     if (error) {
@@ -302,9 +292,9 @@ export class ipfs {
         }
         if (fs.lstatSync(path).isFile()) {
             ls_dir = [path];
-            await this.ipfs_mkdir(path.dirname(path), kwargs);
+            await this.ipfsMkdir(path.dirname(path), kwargs);
 		} else if (fs.lstatSync(path).isDirectory()) {
-            await this.ipfs_mkdir(path, kwargs);
+            await this.ipfsMkdir(path, kwargs);
             ls_dir = fs.readdirSync(path).map(file => path.join(path, file));
         }
         const results1 = [];
@@ -332,9 +322,9 @@ export class ipfs {
             throw new Error("path not found");
         }
         if (fs.lstatSync(path).isFile()) {
-            await this.ipfs_mkdir(path.dirname(path), kwargs);
+            await this.ipfsMkdir(path.dirname(path), kwargs);
         } else if (fs.lstatSync(path).isDirectory()) {
-            await this.ipfs_mkdir(path, kwargs);
+            await this.ipfsMkdir(path, kwargs);
         }
         argstring += `--recursive --to-files=${ls_dir} `;
         const command1 = `ipfs add ${argstring}${ls_dir}`;
@@ -362,13 +352,13 @@ export class ipfs {
     async ipfsRemovePath(path, kwargs = {}) {
         let result1 = null;
         let result2 = null;
-        const stats = await this.ipfs_stat_path(path, kwargs);
+        const stats = await this.ipfsStatPath(path, kwargs);
         if (Object.keys(stats).length === 0) {
             throw new Error("path not found");
         }
         const pin = stats['pin'];
         if (stats["type"] === "file") {
-            const command1 = `export IPFS_PATH=${this.ipfsPath}ipfs/ && ` + this.pathString + ` ipfs files rm ${path}`;
+            const command1 = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs files rm ${path}`;
             result1 = await new Promise((resolve, reject) => {
                 exec(command1, (error, stdout, stderr) => {
                     if (error) {
@@ -378,7 +368,7 @@ export class ipfs {
                     }
                 });
             });
-            const command2 = `export IPFS_PATH=${this.ipfsPath}ipfs/ && ` + this.pathString + ` ipfs pin rm ${pin}`;
+            const command2 = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs pin rm ${pin}`;
             result2 = await new Promise((resolve, reject) => {
                 exec(command2, (error, stdout, stderr) => {
                     if (error) {
@@ -408,7 +398,7 @@ export class ipfs {
 
     async ipfsStatPath(path, kwargs = {}) {
         try {
-            const stat1 = `export IPFS_PATH=${this.ipfsPath}ipfs/ && ` + this.pathString + ` ipfs files stat ${path}`;
+            const stat1 = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs files stat ${path}`;
             const results1 = await new Promise((resolve, reject) => {
                 exec(stat1, (error, stdout, stderr) => {
                     if (error) {
@@ -446,7 +436,7 @@ export class ipfs {
     async ipfsNameResolve(kwargs = {}) {
         let result1 = null;
         try {
-            const command1 = `export IPFS_PATH=${this.ipfsPath}/ipfs/ && ` + this.pathString +  ` ipfs name resolve ${kwargs['path']}`;
+            const command1 = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString +  ` ipfs name resolve ${kwargs['path']}`;
             result1 = await new Promise((resolve, reject) => {
                 exec(command1, (error, stdout, stderr) => {
                     if (error) {
@@ -469,7 +459,7 @@ export class ipfs {
         let results1 = null;
         let results2 = null;
         try {
-            const command1 = `export IPFS_PATH=${this.ipfsPath}/ipfs/ && ` + this.pathString + ` ipfs add --cid-version 1 ${path}`;
+            const command1 = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs add --cid-version 1 ${path}`;
             results1 = await new Promise((resolve, reject) => {
                 exec(command1, (error, stdout, stderr) => {
                     if (error) {
@@ -490,7 +480,7 @@ export class ipfs {
         }
 
         try {
-            const command2 = `export IPFS_PATH=${this.ipfsPath}/ipfs/ &&  ` + this.pathString +  `  ipfs name publish ${results1[Object.keys(results1)[0]]}`;
+            const command2 = `export IPFS_PATH=${this.ipfsPath} &&  ` + this.pathString +  `  ipfs name publish ${results1[Object.keys(results1)[0]]}`;
             results2 = await new Promise((resolve, reject) => {
                 exec(command2, (error, stdout, stderr) => {
                     if (error) {
@@ -516,7 +506,7 @@ export class ipfs {
     async ipfsLsPath(path, kwargs = {}) {
         let results1 = null;
         try {
-            const stat1 = `export IPFS_PATH=${this.ipfsPath}ipfs/ && ` + this.pathString + ` ipfs files ls ${path}`;
+            const stat1 = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs files ls ${path}`;
             results1 = await new Promise((resolve, reject) => {
                 exec(stat1, (error, stdout, stderr) => {
                     if (error) {
@@ -530,7 +520,7 @@ export class ipfs {
         } catch (error) {
             results1 = error.message;
         }
-        if (results1.length > 0 && Array.isArray(results1)) {
+        if (results1 != null && results1.length > 0 && Array.isArray(results1)) {
             return results1;
         } else {
             return false;
@@ -542,7 +532,7 @@ export class ipfs {
         let stdout = null;
         let stderr = null;
         try {
-            const command1 = `export IPFS_PATH=${this.ipfsPath}ipfs/ &&  ` + this.pathString + `  ipfs pin rm ${cid}`;
+            const command1 = `export IPFS_PATH=${this.ipfsPath} &&  ` + this.pathString + `  ipfs pin rm ${cid}`;
             const output = await new Promise((resolve, reject) => {
                 exec(command1, (error, stdout, stderr) => {
                     if (error) {
@@ -569,7 +559,7 @@ export class ipfs {
         let stdout = null;
         let stderr = null;
         try {
-            const command1 = `export IPFS_PATH=${this.ipfsPath}ipfs/ && ` + this.pathString +  `ipfs pin rm ${cid}`;
+            const command1 = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString +  `ipfs pin rm ${cid}`;
             const output = await new Promise((resolve, reject) => {
                 exec(command1, (error, stdout, stderr) => {
                     if (error) {
@@ -680,7 +670,7 @@ export class ipfs {
         let detect = null;
         try {
             detect = await new Promise((resolve, reject) => {
-                let detect_cmd = `export IPFS_PATH=${this.ipfsPath}/ && ` + this.pathString +  " which ipfs";
+                let detect_cmd = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString +  " which ipfs";
                 exec( detect_cmd , (error, stdout, stderr) => {
                     if (error) {
                         reject(error.message);
@@ -715,7 +705,7 @@ export class ipfs {
         let test_add_pin = null;
         try{
             test_add_pin = await this.ipfsAddPin(test_cid_download);
-            console.log(test_add);
+            console.log(test_add_pin);
         } catch (error) {
             test_add_pin = error;
             console.error(error);
@@ -741,7 +731,7 @@ export class ipfs {
 
         let test_remove_path = null;
         try {
-            test_remove_path = await this.ipfsRemovePath(test_download_path);
+            test_remove_path = await this.ipfsRemovePath({ "path": test_download_path });
             console.log(test_remove_path);
         } catch (error) {
             test_remove_path = error;
@@ -750,7 +740,7 @@ export class ipfs {
 
         let test_stat_path = null;
         try {
-            test_stat_path = await this.ipfsStatPath(test_download_path);
+            test_stat_path = await this.ipfsStatPath({ "path": test_download_path });
             console.log(test_stat_path);
         } catch (error) {
             test_stat_path = error;
