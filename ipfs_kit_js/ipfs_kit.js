@@ -689,8 +689,6 @@ class ipfs_kit {
             test_ipfs_upload_object = e.message;
         }
 
-
-
         try {
             test_ipfs_kit_stop = await this.ipfsKitStop();
         }
