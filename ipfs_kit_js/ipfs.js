@@ -2,6 +2,7 @@ import { exec, execSync } from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import { start } from 'repl';
 
 export class ipfs {
     constructor(resources, meta) {
@@ -12,6 +13,14 @@ export class ipfs {
         this.path = process.env.PATH;
         this.path = this.path + ":" + path.join(this.thisDir, "bin")
         this.pathString = "PATH="+ this.path
+        let localPath;
+        if (os.userInfo().uid === 0) {
+            localPath = '/cloudkit_storage/';
+        } else {
+            localPath = path.join(os.homedir(), '.cache');
+        }
+        this.localPath = localPath
+
         if (meta !== null && typeof meta === 'object') {
             if (meta.includes('config') && meta['config'] !== null) {
                 this.config = meta['config'];
@@ -28,15 +37,21 @@ export class ipfs {
                 this.cluster_name = meta['cluster_name'];
             }
             if (meta.includes('ipfs_path') && meta['ipfs_path'] !== null) {
-                    this.ipfsPath = meta['ipfs_path'];
+                this.ipfsPath = meta['ipfs_path'];
+            }
+            else{
+                this.ipfsPath = path.join(this.localPath, "ipfs")
             }
             if (this.role === 'leecher' || this.role === 'worker' || this.role === 'master') {
                 this.commands = {};
             }
         }
+        if (Object.keys(this).includes('ipfsPath') === false) {
+            this.ipfsPath = path.join(this.localPath, "ipfs");
+        }
     }
 
-    async daemon_start(kwargs = {}) {
+    async daemonStart(kwargs = {}) {
         let cluster_name;
         if ('cluster_name' in this) {
             cluster_name = this.cluster_name;
@@ -45,23 +60,22 @@ export class ipfs {
             cluster_name = kwargs['cluster_name'];
         }
 
-        let results1 = null;
-        let results2 = null;
+        let start_daemon_systemctl_results = null;
+        let start_daemon_cmd_results = null;
         let ipfs_ready = false;
 
         // Run this if root and check if it passes 
         if (os.userInfo().uid === 0) {
             try {
-                const command1 = "systemctl start ipfs";
-                exec(command1, (error, stdout, stderr) => {
+                const start_daemon_systemctl = "systemctl start ipfs";
+                exec(start_daemon_systemctl, (error, stdout, stderr) => {
                     if (error) {
                         console.log(`Error starting ipfs: ${error.message}`);
-                        results1 = error.message;
+                        start_daemon_systemctl_results = error.message;
                     } else {
-                        results1 = stdout;
-
-                        const command2 = "ps -ef | grep ipfs | grep daemon | grep -v grep | wc -l";
-                        exec(command2, (error, stdout, stderr) => {
+                        start_daemon_systemctl_results = stdout;
+                        const check_daemon_cmd = "ps -ef | grep ipfs | grep daemon | grep -v grep | wc -l";
+                        exec(check_daemon_cmd, (error, stdout, stderr) => {
                             if (!error && parseInt(stdout.trim()) > 0) {
                                 ipfs_ready = true;
                             }
@@ -69,38 +83,38 @@ export class ipfs {
                     }
                 });
             } catch (error) {
-                results1 = error.message;
+                start_daemon_systemctl_results = error.message;
             }
         }
 
         // Run this if user is not root or root user fails check if it passes
         if (os.userInfo().uid !== 0 || ipfs_ready === false) {
             try {
-                const command2 = `export IPFS_PATH=${path.resolve(path.join(this.ipfsPath,"ipfs"))} &&  ` + this.pathString   + ` ipfs daemon --enable-gc --enable-pubsub-experiment`;
+                const start_daemon_cmd = `export IPFS_PATH=${path.resolve(path.join(this.ipfsPath))} &&  ` + this.pathString   + ` ipfs daemon --enable-gc --enable-pubsub-experiment`;
                 //const execute2 = execSync(command2);
-                const execute2 = exec(command2, (error, stdout, stderr) => {
+                const execute_start_daemon_cmd = exec(start_daemon_cmd, (error, stdout, stderr) => {
                     if (error) {
                         console.log(`Error starting ipfs: ${error.message}`);
-                        results1 = error.message;
+                        start_daemon_cmd_results = error.message;
                     }
                 });
-                //results2 = execute2.toString();
+                start_daemon_cmd_results = execute_start_daemon_cmd;
             } catch (error) {
                 console.log(`Error starting ipfs: ${error.message}`);
-                results2 = error.message;
+                start_daemon_cmd_results = error.message;
             }
         }
 
         const results = {
-            "systemctl": results1,
-            "bash": results2
+            "systemctl": start_daemon_systemctl_results,
+            "bash": start_daemon_cmd_results
         };
 
         return results;
     }
 
 
-    async daemon_stop(kwargs = {}) {
+    async daemonStop(kwargs = {}) {
         let cluster_name;
         if ('cluster_name' in this) {
             cluster_name = this.cluster_name;
@@ -161,7 +175,7 @@ export class ipfs {
     }
 
 
-    async ipfs_resize(size, kwargs = {}) {
+    async ipfsResize(size, kwargs = {}) {
         const command1 = this.daemon_stop();
         const command2 = this.pathString + ` ipfs config --json Datastore.StorageMax ${size}GB`;
         const results1 = await new Promise((resolve, reject) => {
@@ -173,11 +187,11 @@ export class ipfs {
                 }
             });
         });
-        const command3 = this.daemon_start();
+        const command3 = this.daemonStart();
         return results1;
     }
 
-    async ipfs_ls_pin(kwargs = {}) {
+    async ipfsLsPin(kwargs = {}) {
         if ('hash' in kwargs) {
             const hash = kwargs['hash'];
             let request1 = null;
@@ -215,7 +229,7 @@ export class ipfs {
     }
 
 
-    async ipfs_get_pinset(kwargs = {}) {
+    async ipfsGetPinset(kwargs = {}) {
         const this_tempfile = path.join(os.tmpdir(), 'temp.txt');
         const command = `export IPFS_PATH=${this.ipfsPath}ipfs/ && ` + this.pathString + ` ipfs pin ls -s > ${this_tempfile}`;
         await new Promise((resolve, reject) => {
@@ -239,7 +253,7 @@ export class ipfs {
         return pinset;
     }
 
-    async ipfs_add_pin(pin, kwargs = {}) {
+    async ipfsAddPin(pin, kwargs = {}) {
         const dirname = path.dirname(__filename);
         let result1;
         try {
@@ -259,7 +273,7 @@ export class ipfs {
         return result1;
     }
 
-    async ipfs_mkdir(path, kwargs = {}) {
+    async ipfsMkdir(path, kwargs = {}) {
         const this_path_split = path.split("/");
         let this_path = "";
         const results = [];
@@ -281,7 +295,7 @@ export class ipfs {
     }
 
 
-    async ipfs_add_path2(path, kwargs = {}) {
+    async ipfsAddPath2(path, kwargs = {}) {
         let ls_dir = [];
         if (!fs.existsSync(path)) {
             throw new Error("path not found");
@@ -311,7 +325,7 @@ export class ipfs {
         return results1;
     }
 
-    async ipfs_add_path(path, kwargs = {}) {
+    async ipfsAddPath(path, kwargs = {}) {
         let argstring = "";
         let ls_dir = path;
         if (!fs.existsSync(path)) {
@@ -345,7 +359,7 @@ export class ipfs {
     }
 
 
-    async ipfs_remove_path(path, kwargs = {}) {
+    async ipfsRemovePath(path, kwargs = {}) {
         let result1 = null;
         let result2 = null;
         const stats = await this.ipfs_stat_path(path, kwargs);
@@ -392,7 +406,7 @@ export class ipfs {
         return results;
     }
 
-    async ipfs_stat_path(path, kwargs = {}) {
+    async ipfsStatPath(path, kwargs = {}) {
         try {
             const stat1 = `export IPFS_PATH=${this.ipfsPath}ipfs/ && ` + this.pathString + ` ipfs files stat ${path}`;
             const results1 = await new Promise((resolve, reject) => {
@@ -429,7 +443,7 @@ export class ipfs {
     }
 
 
-    async ipfs_name_resolve(kwargs = {}) {
+    async ipfsNameResolve(kwargs = {}) {
         let result1 = null;
         try {
             const command1 = `export IPFS_PATH=${this.ipfsPath}/ipfs/ && ` + this.pathString +  ` ipfs name resolve ${kwargs['path']}`;
@@ -448,7 +462,7 @@ export class ipfs {
         return result1;
     }
 
-    async ipfs_name_publish(path, kwargs = {}) {
+    async ipfsNamePublish(path, kwargs = {}) {
         if (!fs.existsSync(path)) {
             throw new Error("path not found");
         }
@@ -499,7 +513,7 @@ export class ipfs {
     }
 
 
-    async ipfs_ls_path(path, kwargs = {}) {
+    async ipfsLsPath(path, kwargs = {}) {
         let results1 = null;
         try {
             const stat1 = `export IPFS_PATH=${this.ipfsPath}ipfs/ && ` + this.pathString + ` ipfs files ls ${path}`;
@@ -523,7 +537,7 @@ export class ipfs {
         }
     }
 
-    async ipfs_remove_pin(cid, kwargs = {}) {
+    async ipfsRemovePin(cid, kwargs = {}) {
         let result1 = null;
         let stdout = null;
         let stderr = null;
@@ -550,7 +564,7 @@ export class ipfs {
     }
 
 
-    async ipfs_remove_pin(cid, kwargs = {}) {
+    async ipfsRemovePin(cid, kwargs = {}) {
         let result1 = null;
         let stdout = null;
         let stderr = null;
@@ -576,7 +590,7 @@ export class ipfs {
         return result1;
     }
 
-    async ipfs_execute(command, kwargs = {}) {
+    async ipfsExecute(command, kwargs = {}) {
         if (typeof kwargs !== 'object') {
             throw new Error("kwargs must be an object");
         }
@@ -659,7 +673,10 @@ export class ipfs {
         }
     }
 
-    async test_ipfs() {
+    async testIpfs() {
+        let test_cid_download =  "QmccfbkWLYs9K3yucc6b3eSt8s8fKcyRRt24e3CDaeRhM1";
+        let test_download_path = "/tmp/test";
+
         let detect = null;
         try {
             detect = await new Promise((resolve, reject) => {
@@ -678,7 +695,7 @@ export class ipfs {
 
         let test_daemon_start = null;
         try {
-            test_daemon_start = await this.daemon_start();
+            test_daemon_start = await this.daemonStart();
             console.log(test_daemon_start);
         }
         catch (error) {
@@ -688,7 +705,7 @@ export class ipfs {
 
         let test_ls_pin = null;
         try {
-            test_ls_pin = await this.ipfs_ls_pin();
+            test_ls_pin = await this.ipfsLsPin( { "hash": test_cid_download } );
             console.log(test_ls_pin);
         } catch (error) {
             test_ls_pin = error;
@@ -697,7 +714,7 @@ export class ipfs {
 
         let test_add_pin = null;
         try{
-            test_add_pin = await this.ipfs_add_pin();
+            test_add_pin = await this.ipfsAddPin(test_cid_download);
             console.log(test_add);
         } catch (error) {
             test_add_pin = error;
@@ -706,7 +723,7 @@ export class ipfs {
 
         let test_get_pinset = null;
         try {
-            test_get_pinset = await this.ipfs_get_pinset();
+            test_get_pinset = await this.ipfsGetPinset();
             console.log(test_get_pinset);
         } catch (error) {
             test_get_pinset = error;
@@ -715,7 +732,7 @@ export class ipfs {
 
         let test_add_path = null;
         try {
-            test_add_path = await this.ipfs_add_path();
+            test_add_path = await this.ipfsAddPath(test_download_path);
             console.log(test_add_path);
         } catch (error) {
             test_add_path = error;
@@ -724,7 +741,7 @@ export class ipfs {
 
         let test_remove_path = null;
         try {
-            test_remove_path = await this.ipfs_remove_path();
+            test_remove_path = await this.ipfsRemovePath(test_download_path);
             console.log(test_remove_path);
         } catch (error) {
             test_remove_path = error;
@@ -733,7 +750,7 @@ export class ipfs {
 
         let test_stat_path = null;
         try {
-            test_stat_path = await this.ipfs_stat_path();
+            test_stat_path = await this.ipfsStatPath(test_download_path);
             console.log(test_stat_path);
         } catch (error) {
             test_stat_path = error;
@@ -742,7 +759,7 @@ export class ipfs {
 
         let test_name_resolve = null;
         try {
-            test_name_resolve = await this.ipfs_name_resolve();
+            test_name_resolve = await this.ipfsNameResolve();
             console.log(test_name_resolve);
         } catch (error) {
             test_name_resolve = error;
@@ -751,7 +768,7 @@ export class ipfs {
 
         let test_name_publish = null;
         try {
-            test_name_publish = await this.ipfs_name_publish();
+            test_name_publish = await this.ipfsNamePublish(test_download_path);
             console.log(test_name_publish);
         } catch (error) {
             test_name_publish = error;
@@ -760,7 +777,7 @@ export class ipfs {
 
         let test_ls_path = null;
         try {
-            test_ls_path = await this.ipfs_ls_path();
+            test_ls_path = await this.ipfsLsPath(test_download_path);
             console.log(test_ls_path);
         } catch (error) {
             test_ls_path = error;
@@ -769,7 +786,7 @@ export class ipfs {
 
         let test_remove_pin = null;
         try {
-            test_remove_pin = await this.ipfs_remove_pin();
+            test_remove_pin = await this.ipfsRemovePin(test_cid_download);
             console.log(test_remove_pin);
         } catch (error) {
             test_remove_pin = error;
@@ -778,7 +795,7 @@ export class ipfs {
 
         let test_stop_daemon = null;
         try {
-            test_stop_daemon = await this.daemon_stop();
+            test_stop_daemon = await this.daemonStop();
             console.log(test_stop_daemon);
         } catch (error) {
             test_stop_daemon = error;
@@ -816,6 +833,6 @@ if (import.meta.url === import.meta.url) {
         secret: "96d5952479d0a2f9fbf55076e5ee04802f15ae5452b5faafc98e2bd48cf564d3",
     };
     const ipfs_instance = new ipfs();
-    const test_ipfs = await ipfs_instance.test_ipfs();
+    const test_ipfs = await ipfs_instance.testIpfs();
     console.log(test_ipfs);
 }
