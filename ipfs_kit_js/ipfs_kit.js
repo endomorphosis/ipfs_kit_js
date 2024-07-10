@@ -109,7 +109,7 @@ class ipfs_kit {
         }
     }
 
-    ipfs_kit_ready(kwargs) {
+    ipfsKitReady(kwargs) {
         let cluster_name = kwargs.cluster_name || this.cluster_name;
         if (!cluster_name && this.role !== "leecher") {
             throw new Error("cluster_name is not defined");
@@ -148,7 +148,7 @@ class ipfs_kit {
         return ready;
     }
 
-    load_collection(cid, kwargs) {
+    loadCollection(cid, kwargs) {
         if (!cid) {
             throw new Error("collection is None");
         }
@@ -189,7 +189,7 @@ class ipfs_kit {
         }
     }
     
-    async ipfs_add_pin(pin, kwargs = {}) {
+    async ipfsAddPin(pin, kwargs = {}) {
         let dstPath = kwargs.path || this.ipfsPath;
         if (!await exists(dstPath)) {
             await mkdir(dstPath, { recursive: true });
@@ -222,7 +222,7 @@ class ipfs_kit {
         };
     }
 
-    async ipfs_add_path(path, kwargs = {}) {
+    async ipfsAddPath(path, kwargs = {}) {
         let result1 = null;
         let result2 = null;
         if (this.role === "master") {
@@ -238,7 +238,7 @@ class ipfs_kit {
         };
     }
 
-    async ipfs_ls_path(path, kwargs = {}) {
+    async ipfsLsPath(path, kwargs = {}) {
         let result1 = await this.ipfs.ipfs_ls_path(path, kwargs);
         result1 = result1.filter(item => item !== "");
 
@@ -247,21 +247,21 @@ class ipfs_kit {
         };
     }
 
-    async name_resolve(kwargs = {}) {
+    async nameResolve(kwargs = {}) {
         let result1 = await this.ipfs.ipfs_name_resolve(kwargs);
         return {
             ipfs_name_resolve: result1
         };
     }
 
-    async name_publish(path, kwargs = {}) {
+    async namePublish(path, kwargs = {}) {
         let result1 = await this.ipfs.ipfs_name_publish(path, kwargs);
         return {
             ipfs_name_publish: result1
         };
     }
 
-    async ipfs_remove_path(path, kwargs = {}) {
+    async ipfsRemovePath(path, kwargs = {}) {
         let result1 = null;
         let result2 = null;
         if (this.role === "master") {
@@ -277,7 +277,7 @@ class ipfs_kit {
         };
     }
 
-    async ipfs_remove_pin(pin, kwargs = {}) {
+    async ipfsRemovePin(pin, kwargs = {}) {
         let result1 = null;
         let result2 = null;
         if (this.role === "master") {
@@ -518,7 +518,7 @@ class ipfs_kit {
         return this.ipget.ipgetDownloadObject(kwargs);
     }
 
-    static async updateCollectionIpfs(collection, collectionPath) {
+    async updateCollectionIpfs(collection, collectionPath) {
         let thisCollectionIpfs = null;
         let command1 = `ipfs add -r ${collectionPath}`;
 
@@ -548,6 +548,173 @@ class ipfs_kit {
         }
     }
 
+    async test_ipfs_kit() {
+
+        let test_ipfs_kit_start = null;
+        let test_ipfs_kit_ready = null;
+        let test_ipfs_kit_stop = null;
+        let test_ipfs_get_pinset = null;
+        let test_ipfs_add_pin = null;
+        let test_ipfs_remove_pin = null;
+        let test_ipfs_add_path = null;
+        let test_ipfs_remove_path = null;
+        let test_ipfs_ls_path = null;
+        let test_ipfs_get_config = null;
+        let test_ipfs_set_config = null;
+        let test_ipfs_name_resolve = null;
+        let test_ipfs_name_publish = null;
+        let test_ipfs_get_config_value = null;
+        let test_ipfs_set_config_value = null;
+        let test_update_collection_ipfs = null;
+        let test_ipget_download_object = null;
+        let test_ipfs_upload_object = null;
+        let test_load_collection = null;
+
+        try {
+            test_ipfs_kit_start = await this.ipfsKitStart();
+        } catch (e) {
+            test_ipfs_kit_start = e.message;
+        }
+
+        try {
+            test_ipfs_kit_ready = await this.ipfsKitReady();
+        } catch (e) {
+            test_ipfs_kit_ready = e.message;
+        }
+
+        try {
+            test_load_collection = await this.loadCollection();
+        } catch (e) {
+            test_load_collection = e.message;
+        }
+
+        try{
+            test_ipfs_get_config = await this.ipfsGetConfig();
+        }
+        catch(e){
+            test_ipfs_get_config = e.message;
+        }
+
+        try{
+            test_ipfs_set_config = await this.ipfsSetConfig();
+        }
+        catch(e){
+            test_ipfs_set_config = e.message;
+        }
+
+        try{
+            test_ipfs_name_resolve = await this.nameResolve();
+        }
+        catch(e){
+            test_ipfs_name_resolve = e.message;
+        }
+
+        try{
+            test_ipfs_name_publish = await this.namePublish();
+        }
+        catch(e){
+            test_ipfs_name_publish = e.message;
+        }
+
+        try{
+            test_ipfs_get_config_value = await this.ipfsGetConfigValue();
+        }
+        catch(e){
+            test_ipfs_get_config_value = e.message;
+        }
+
+        try{
+            test_ipfs_set_config_value = await this.ipfsSetConfigValue();
+        }
+        catch(e){
+            test_ipfs_set_config_value = e.message;
+        }
+
+        try {
+            test_update_collection_ipfs = await this.updateCollectionIpfs();
+        }
+        catch (e) {
+            test_update_collection_ipfs = e.message;
+        }
+
+        try {
+            test_ipfs_add_path = await this.ipfsAddPath();
+        }
+        catch (e) {
+            test_ipfs_add_path = e.message;
+        }
+
+        try {
+            test_ipfs_remove_path = await this.ipfsRemovePath();
+        }
+        catch (e) {
+            test_ipfs_remove_path = e.message;
+        }
+
+        try {
+            test_ipfs_ls_path = await this.ipfsLsPath();
+        }
+        catch (e) {
+            test_ipfs_ls_path = e.message;
+        }
+
+        try {
+            test_ipfs_get_pinset = await this.ipfsGetPinset();
+        } catch (e) {
+            test_ipfs_get_pinset = e.message;
+        }
+
+        try {
+            test_ipfs_add_pin = await this.ipfsAddPin
+        } catch (e) {
+            test_ipfs_add_pin = e.message;
+        }
+
+        try {
+            test_ipfs_remove_pin = await this.ipfsRemovePin();
+        } catch (e) {
+            test_ipfs_remove_pin = e.message;
+        }
+
+        try {
+            test_ipget_download_object = await this.ipgetDownloadObject();
+        } catch (e) {
+            test_ipget_download_object = e.message;
+        }
+
+        try {
+            test_ipfs_upload_object = await this.ipfsUploadObject();
+        }
+        catch (e) {
+            test_ipfs_upload_object = e.message;
+        }
+
+
+
+        try {
+            test_ipfs_kit_stop = await this.ipfsKitStop();
+        }
+        catch (e) {
+            test_ipfs_kit_stop = e.message;
+        }
+
+        let results = {
+            test_ipfs_kit_start: test_ipfs_kit_start,
+            test_ipfs_kit_ready: test_ipfs_kit_ready,
+            test_ipfs_kit_stop: test_ipfs_kit_stop,
+            test_ipfs_get_pinset: test_ipfs_get_pinset,
+            test_ipfs_add_pin: test_ipfs_add_pin,
+            test_ipfs_remove_pin: test_ipfs_remove_pin,
+            test_ipfs_get: test_ipfs_get,
+            test_ipget_download_object: test_ipget_download_object,
+            test_ipfs_upload_object: test_ipfs_upload_object,
+            test_load_collection: test_load_collection
+        };
+
+        return results;
+
+    }
+
 }
 
 
@@ -559,6 +726,6 @@ if (import.meta.url === import.meta.url) {
         secret: "96d5952479d0a2f9fbf55076e5ee04802f15ae5452b5faafc98e2bd48cf564d3",
     };
     const ipfs_kit_instance = new ipfs_kit();
-    const test_ipfs = await ipfs_kit_instance.test_ipfs();
+    const test_ipfs = await ipfs_kit_instance.test_ipfs_kit();
     console.log(test_ipfs);
 }
