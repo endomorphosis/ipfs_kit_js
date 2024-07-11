@@ -82,8 +82,8 @@ export class ipfs {
         if (fs.existsSync(this.ipfsPath)) {
             ipfsPathFiles = fs.readdirSync(this.ipfsPath);
         }
-        let ipfs_path_files = fs.readdirSync(this.ipfsPath);
-        if (!homedir_files.includes(".ipfs") || !ipfs_path_files.includes("ipfs") || !fs.existsSync(this.ipfsPath) ){
+        if (!fs.existsSync(this.ipfsPath) ){
+            ipfsPathFiles = []
             this.installIpfs = new InstallIPFS(this.resources, this.meta);
             await new Promise((resolve, reject) => {
                 try{
@@ -95,6 +95,7 @@ export class ipfs {
                     reject(error);
                 }
             });
+            ipfsPathFiles = fs.readdirSync(this.ipfsPath);
         }
 
         let start_daemon_systemctl_results = null;
@@ -233,7 +234,7 @@ export class ipfs {
             const hash = kwargs['hash'];
             let request1 = null;
             try {
-                const command = this.pathString + ` ipfs cat ${hash}`;
+                const command = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs cat ${hash}`;
                 request1 = await new Promise((resolve, reject) => {
                     exec(command, (error, stdout, stderr) => {
                         if (error) {

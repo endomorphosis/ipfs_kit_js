@@ -905,7 +905,6 @@ export class InstallIPFS {
     //     return results;
     // }
 
-
     async configIPFS(kwargs) {
         let results = {};
         this.clusterName = kwargs.clusterName || this.clusterName;
@@ -925,12 +924,10 @@ export class InstallIPFS {
         let run_daemon = null;
         let public_key = null;
         let ipfs_daemon = null;
-
-        if (!fs.existsSync(this.ipfsPath)) {
-            fs.mkdirSync(this.ipfsPath, { recursive: true });
-        }
-
-        let ipfs_dir_contents = fs.readdirSync(this.ipfsPath);
+        let ipfs_dir_contents = []
+        if (fs.existsSync(this.ipfsPath)) {
+            let ipfs_dir_contents = fs.readdirSync(this.ipfsPath);
+        }   
         if (ipfs_dir_contents.length > 0) {
             console.log("ipfs directory is not empty");
             for (let del_file of ipfs_dir_contents) {
@@ -963,20 +960,20 @@ export class InstallIPFS {
                 // Note: The following commands are synchronous and may block the event loop
                 // Consider using child_process.exec or child_process.spawn for async execution
 
-                let ipfs_init_command = `ipfsPath=${this.ipfsPath} `+ this.pathString + ` ipfs init --profile=badgerds`;
+                let ipfs_init_command = `IPFS_PATH=${this.ipfsPath} `+ this.pathString + ` ipfs init --profile=badgerds`;
                 let ipfs_init_results = execSync(ipfs_init_command).toString().trim();
 
-                let peer_id_command = `ipfsPath=${this.ipfsPath} ` + this.pathString + ` ipfs id`;
+                let peer_id_command = `IPFS_PATH=${this.ipfsPath} ` + this.pathString + ` ipfs id`;
                 let peer_id_results = execSync(peer_id_command).toString();
                 peer_id = JSON.parse(peer_id_results);
 
-                let ipfs_profile_apply = `ipfsPath=${this.ipfsPath} ` +  this.pathString+ ` ipfs config profile apply badgerds`;
+                let ipfs_profile_apply = `IPFS_PATH=${this.ipfsPath} ` +  this.pathString+ ` ipfs config profile apply badgerds`;
                 let ipfs_profile_apply_results = execSync(ipfs_profile_apply).toString();
                 let ipfs_profile_apply_json = JSON.parse(ipfs_profile_apply_results);
 
                 if (disk_available > min_free_space) {
                     allocate = Math.ceil(((disk_available - min_free_space) * 0.8) / 1024 / 1024 / 1024);
-                    let datastore_command = `ipfsPath=${this.ipfsPath} ` + this.pathString + ` ipfs config Datastore.StorageMax ${allocate}GB`;
+                    let datastore_command = `IPFS_PATH=${this.ipfsPath} ` + this.pathString + ` ipfs config Datastore.StorageMax ${allocate}GB`;
                     let datastore_command_results = execSync(datastore_command).toString();
                 }
 
@@ -985,7 +982,7 @@ export class InstallIPFS {
                     let peerlist = fs.readFileSync(peer_list_path, "utf8").split("\n");
                     for (let peer of peerlist) {
                         if (peer) {
-                            let bootstrap_add_command = `ipfsPath=${this.ipfsPath}  ` + this.pathString + ` ipfs bootstrap add ${peer}`;
+                            let bootstrap_add_command = `IPFS_PATH=${this.ipfsPath}  ` + this.pathString + ` ipfs bootstrap add ${peer}`;
                             let bootstrap_add_command_results = execSync(bootstrap_add_command).toString();
                         }
                     }
@@ -996,7 +993,7 @@ export class InstallIPFS {
                     fs.writeFileSync("/etc/systemd/system/ipfs.service", ipfs_service_text);
                 }
 
-                let config_get_cmd = `ipfsPath=${this.ipfsPath} ipfs config show`;
+                let config_get_cmd = this.pathString + ` IPFS_PATH=${this.ipfsPath} ipfs config show`;
                 let config_data = execSync(config_get_cmd).toString();
                 config_data = JSON.parse(config_data);
                 results["config"] = config_data;
@@ -1081,9 +1078,9 @@ export class InstallIPFS {
             }
             let run_daemon_cmd = `ipfsPath=${this.ipfsPath} ipfs daemon --enable-pubsub-experiment`;
             let run_daemon = exec(run_daemon_cmd);
+            let test_daemon_results = null;
             setTimeout(() => {
                 find_daemon_results = execSync(find_daemon_cmd).toString().trim();
-                let test_daemon_results = null;
                 try {
                     if (fs.existsSync("/tmp/test.jpg")) {
                         fs.unlinkSync("/tmp/test.jpg");
