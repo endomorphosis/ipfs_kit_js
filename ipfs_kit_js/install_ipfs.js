@@ -539,7 +539,7 @@ export class InstallIPFS {
         let run_cluster_ctl = null;
 
         try {
-            let run_cluster_ctl_cmd = `${this.path_string} ipfs-cluster-ctl --version`;
+            let run_cluster_ctl_cmd = this.pathString + ` ipfs-cluster-ctl --version`;
             exec(run_cluster_ctl_cmd, (error, stdout, stderr) => {
                 if (error) {
                     console.error(`exec error: ${error}`);
@@ -1086,7 +1086,7 @@ export class InstallIPFS {
                         fs.unlinkSync("/tmp/test.jpg");
                     }
 
-                    let test_daemon = `bash -c "ipfsPath=${this.ipfsPath} ` + this.path_string + ` ipfs cat /ipfs/QmSgvgwxZGaBLqkGyWemEDqikCqU52XxsYLKtdy3vGZ8uq > /tmp/test.jpg"`;
+                    let test_daemon = `bash -c "IPFS_PATH=${this.ipfsPath} ` + this.pathString + ` ipfs cat /ipfs/QmSgvgwxZGaBLqkGyWemEDqikCqU52XxsYLKtdy3vGZ8uq > /tmp/test.jpg"`;
                     test_daemon_results = execSync(test_daemon).toString();
                     setTimeout(() => {
                         if (fs.existsSync("/tmp/test.jpg")) {
@@ -1138,7 +1138,7 @@ export class InstallIPFS {
         ipfsPath = path.join(ipfsPath, "ipfs");
         fs.mkdirSync(ipfsPath, { recursive: true });
 
-        const runIPFSClusterServiceCommand = `IPFS_CLUSTER_PATH=${ipfsPath} ipfs-cluster-service`;
+        const runIPFSClusterServiceCommand = this.pathString + ` IPFS_CLUSTER_PATH=${ipfsPath} ipfs-cluster-service`;
         const runIPFSClusterServiceCommandResults = exec(runIPFSClusterServiceCommand);
 
         runIPFSClusterServiceCommandResults.stdout.on('data', (data) => {
@@ -1161,7 +1161,7 @@ export class InstallIPFS {
         ipfsPath = path.join(ipfsPath, "ipfs");
         fs.mkdirSync(ipfsPath, { recursive: true });
 
-        const command = `IPFS_CLUSTER_PATH=${ipfsPath} ipfs-cluster-ctl`;
+        const command = this.pathString + ` IPFS_CLUSTER_PATH=${ipfsPath} ipfs-cluster-ctl`;
         const process = exec(command);
 
         process.stdout.on('data', (data) => {
@@ -1471,10 +1471,10 @@ export class InstallIPFS {
             results.clusterFollowExecute = await this.runIPFSClusterFollow();
         }
 
-        await this.killProcessByPattern("ipfs");
-        await this.killProcessByPattern("ipfs-cluster-follow");
-        await this.killProcessByPattern("ipfs-cluster-service");
-        await this.killProcessByPattern("ipfs-cluster-ctl");
+        // await this.killProcessByPattern("ipfs");
+        // await this.killProcessByPattern("ipfs-cluster-follow");
+        // await this.killProcessByPattern("ipfs-cluster-service");
+        // await this.killProcessByPattern("ipfs-cluster-ctl");
 
         if (os.userInfo().uid === 0) {
             let systemctlReload = "systemctl daemon-reload";
