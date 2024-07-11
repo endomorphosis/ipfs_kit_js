@@ -3,6 +3,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { start } from 'repl';
+import { InstallIPFS } from './install_ipfs.js';
 
 export class ipfs {
     constructor(resources, meta) {
@@ -10,6 +11,8 @@ export class ipfs {
         if (this.thisDir.startsWith("file://")) {
             this.thisDir = this.thisDir.replace("file://", "");
         }
+        this.meta = meta;
+        this.resources = resources;
         this.path = process.env.PATH;
         this.path = this.path + ":" + path.join(this.thisDir, "bin")
         this.pathString = "PATH="+ this.path
@@ -20,12 +23,11 @@ export class ipfs {
             localPath = path.join(os.homedir(), '.cache');
         }
         this.localPath = localPath
-
         if (meta !== null && typeof meta === 'object') {
-            if (meta.includes('config') && meta['config'] !== null) {
+            if (Object.keys(meta).includes('config') && meta['config'] !== null) {
                 this.config = meta['config'];
             }
-            if (meta.includes('role') && meta['role'] !== null) {
+            if (Object.keys(meta).includes('role') && meta['role'] !== null) {
                 this.role = meta['role'];
                 if (!['master', 'worker', 'leecher'].includes(this.role)) {
                     throw new Error('role is not either master, worker, leecher');
@@ -33,10 +35,10 @@ export class ipfs {
                     this.role = 'leecher';
                 }
             }
-            if (meta.includes('cluster_name') && meta['cluster_name'] !== null) {
+            if (Object.keys(meta).includes('cluster_name') && meta['cluster_name'] !== null) {
                 this.cluster_name = meta['cluster_name'];
             }
-            if (meta.includes('ipfs_path') && meta['ipfs_path'] !== null) {
+            if (Object.keys(meta).includes('ipfs_path') && meta['ipfs_path'] !== null) {
                 this.ipfsPath = meta['ipfs_path'];
             }
             else{
@@ -47,8 +49,24 @@ export class ipfs {
             }
         }
         if (Object.keys(this).includes('ipfsPath') === false) {
-            this.ipfsPath = path.join(this.localPath, "ipfs");
+            if (os.userInfo().uid === 0) {
+                this.ipfsPath = '/ipfs/';
+            }
+            else{
+                this.ipfsPath = path.join(path.join(os.homedir(), '.cache'), 'ipfs');
+            }
         }
+
+        // if (!homedir_files.includes(".ipfs") && !ipfs_path_files.includes("ipfs") && os.path.existsSync(ipfs_path)){
+        //     this.installIpfs = new InstallIPFS();
+        //     this.installIpfs.install_ipfs_daemon().then((result) => {
+        //     this.installIpfs.install_ipget()
+        //     let stats = this.test_fio.stats(this.ipfsPath)
+        //     this.installIpfs.config_ipfs(
+        //         disk_stats = stats,
+        //         ipfs_path = this.ipfsPath,
+        //     )
+        // }
     }
 
     async daemonStart(kwargs = {}) {
@@ -58,6 +76,25 @@ export class ipfs {
         }
         if ('cluster_name' in kwargs) {
             cluster_name = kwargs['cluster_name'];
+        }
+        let homedir_files = fs.readdirSync(os.homedir());
+        let ipfsPathFiles = []
+        if (fs.existsSync(this.ipfsPath)) {
+            ipfsPathFiles = fs.readdirSync(this.ipfsPath);
+        }
+        let ipfs_path_files = fs.readdirSync(this.ipfsPath);
+        if (!homedir_files.includes(".ipfs") || !ipfs_path_files.includes("ipfs") || !fs.existsSync(this.ipfsPath) ){
+            this.installIpfs = new InstallIPFS(this.resources, this.meta);
+            await new Promise((resolve, reject) => {
+                try{
+                    this.installIpfs.installAndConfigure().then((result) => {
+                        resolve(result);
+                    });
+                }
+                catch (error) {
+                    reject(error);
+                }
+            });
         }
 
         let start_daemon_systemctl_results = null;
@@ -822,7 +859,7 @@ if (import.meta.url === import.meta.url) {
         clusterLocation: "/ip4/167.99.96.231/tcp/9096/p2p/12D3KooWKw9XCkdfnf8CkAseryCgS3VVoGQ6HUAkY91Qc6Fvn4yv",
         secret: "96d5952479d0a2f9fbf55076e5ee04802f15ae5452b5faafc98e2bd48cf564d3",
     };
-    const ipfs_instance = new ipfs();
+    const ipfs_instance = new ipfs(null, meta);
     const test_ipfs = await ipfs_instance.testIpfs();
     console.log(test_ipfs);
 }
