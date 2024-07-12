@@ -258,6 +258,35 @@ export class ipfs {
             const hash = kwargs['hash'];
             let request1 = false;
             try {
+                const command = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs ls ${hash}`;
+                request1 = await new Promise((resolve, reject) => {
+                    exec(command, (error, stdout, stderr) => {
+                        if (error) {
+                            reject(error.message);
+                        } else {
+                            resolve(stdout);
+                        }
+                    });
+                });
+            } catch (error) {
+                console.error(error);
+            }
+            if (request1 != undefined) {
+                return request1;
+            }
+        }
+        else {
+            throw new Error("hash not found in kwargs");
+        }
+    }
+
+
+
+    async ipfsCatPin(kwargs = {}) {
+        if ('hash' in kwargs) {
+            const hash = kwargs['hash'];
+            let request1 = false;
+            try {
                 const command = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs cat ${hash}`;
                 request1 = await new Promise((resolve, reject) => {
                     exec(command, (error, stdout, stderr) => {
@@ -325,8 +354,8 @@ export class ipfs {
         return result1;
     }
 
-    async ipfsMkdir(path, kwargs = {}) {
-        const this_path_split = path.split("/");
+    async ipfsMkdir(src_path, kwargs = {}) {
+        const this_path_split = src_path.split("/");
         let this_path = "";
         const results = [];
         for (let i = 0; i < this_path_split.length; i++) {
@@ -377,16 +406,16 @@ export class ipfs {
         return results1;
     }
 
-    async ipfsAddPath(path, kwargs = {}) {
+    async ipfsAddPath(src_path, kwargs = {}) {
         let argstring = "";
-        let ls_dir = path;
-        if (!fs.existsSync(path)) {
+        let ls_dir = src_path;
+        if (!fs.existsSync(src_path)) {
             throw new Error("path not found");
         }
-        if (fs.lstatSync(path).isFile()) {
-            await this.ipfsMkdir(path.dirname(path), kwargs);
-        } else if (fs.lstatSync(path).isDirectory()) {
-            await this.ipfsMkdir(path, kwargs);
+        if (fs.lstatSync(src_path).isFile()) {
+            await this.ipfsMkdir(path.dirname(src_path), kwargs);
+        } else if (fs.lstatSync(src_path).isDirectory()) {
+            await this.ipfsMkdir(src_path, kwargs);
         }
         argstring += `--recursive --to-files=${ls_dir} `;
         const command1 = `ipfs add ${argstring}${ls_dir}`;
@@ -731,6 +760,7 @@ export class ipfs {
         test_cid_download = 'QmSgvgwxZGaBLqkGyWemEDqikCqU52XxsYLKtdy3vGZ8uq'
 
         let test_download_path = "/tmp/test";
+        let this_script_name = path.join(this.thisDir, path.basename(import.meta.url));
 
         let detect = null;
         try {
@@ -789,7 +819,7 @@ export class ipfs {
 
         let test_add_path = null;
         try {
-            test_add_path = await this.ipfsAddPath(test_download_path);
+            test_add_path = await this.ipfsAddPath(this_script_name);
             console.log(test_add_path);
         } catch (error) {
             test_add_path = error;
@@ -798,7 +828,7 @@ export class ipfs {
 
         let test_remove_path = null;
         try {
-            test_remove_path = await this.ipfsRemovePath({ "path": test_download_path });
+            test_remove_path = await this.ipfsRemovePath(this_script_name);
             console.log(test_remove_path);
         } catch (error) {
             test_remove_path = error;
@@ -807,7 +837,7 @@ export class ipfs {
 
         let test_stat_path = null;
         try {
-            test_stat_path = await this.ipfsStatPath({ "path": test_download_path });
+            test_stat_path = await this.ipfsStatPath(this_script_name);
             console.log(test_stat_path);
         } catch (error) {
             test_stat_path = error;
@@ -816,7 +846,7 @@ export class ipfs {
 
         let test_name_resolve = null;
         try {
-            test_name_resolve = await this.ipfsNameResolve();
+            test_name_resolve = await this.ipfsNameResolve(this_script_name);
             console.log(test_name_resolve);
         } catch (error) {
             test_name_resolve = error;
@@ -825,7 +855,7 @@ export class ipfs {
 
         let test_name_publish = null;
         try {
-            test_name_publish = await this.ipfsNamePublish(test_download_path);
+            test_name_publish = await this.ipfsNamePublish(this_script_name);
             console.log(test_name_publish);
         } catch (error) {
             test_name_publish = error;
@@ -834,7 +864,7 @@ export class ipfs {
 
         let test_ls_path = null;
         try {
-            test_ls_path = await this.ipfsLsPath(test_download_path);
+            test_ls_path = await this.ipfsLsPath(this_script_name);
             console.log(test_ls_path);
         } catch (error) {
             test_ls_path = error;
