@@ -78,7 +78,7 @@ export class ipfs {
             cluster_name = kwargs['cluster_name'];
         }
         let homedir_files = fs.readdirSync(os.homedir());
-        let ipfsPathFiles = []
+        let ipfsPathFiles = [];
         if (fs.existsSync(this.ipfsPath)) {
             ipfsPathFiles = fs.readdirSync(this.ipfsPath);
         }
@@ -99,7 +99,7 @@ export class ipfs {
         }
 
         let start_daemon_systemctl_results = null;
-        let start_daemon_cmd_results = null;
+        let start_daemon_cmd_results = false;
         let ipfs_ready = false;
 
         // Run this if root and check if it passes 
@@ -135,20 +135,44 @@ export class ipfs {
                         console.log(`Error starting ipfs: ${error.message}`);
                         start_daemon_cmd_results = error.message;
                     }
+                    if (stdout) {
+                        start_daemon_cmd_results = stdout;
+                    }
                 });
-                start_daemon_cmd_results = execute_start_daemon_cmd;
+                // add a sleep here to wait for the daemon to start
+                let milliseconds = 2000;
+                let start = new Date().getTime();
+                while (start_daemon_cmd_results == false) {
+                    if ((new Date().getTime() - start) > milliseconds) {
+                        break;
+                    }
+                }
+
+                return new Promise((resolve, reject) => {
+                    const check_daemon_cmd = "ps -ef | grep ipfs | grep daemon | grep -v grep | wc -l";
+                    exec(check_daemon_cmd, (error, stdout, stderr) => {
+                        let len_stdout = parseInt(stdout.trim());
+                        if (!error && len_stdout > 0) {
+                            ipfs_ready = true;
+                        }
+                        else {
+                            // handle error
+                        }
+                        const results = {
+                            "systemctl": start_daemon_systemctl_results,
+                            "bash": start_daemon_cmd_results,
+                            "ipfs_ready": ipfs_ready,
+                        };
+                        resolve(results);
+                    });
+                });
             } catch (error) {
                 console.log(`Error starting ipfs: ${error.message}`);
                 start_daemon_cmd_results = error.message;
             }
         }
 
-        const results = {
-            "systemctl": start_daemon_systemctl_results,
-            "bash": start_daemon_cmd_results
-        };
 
-        return results;
     }
 
 
@@ -232,7 +256,7 @@ export class ipfs {
     async ipfsLsPin(kwargs = {}) {
         if ('hash' in kwargs) {
             const hash = kwargs['hash'];
-            let request1 = null;
+            let request1 = false;
             try {
                 const command = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs cat ${hash}`;
                 request1 = await new Promise((resolve, reject) => {
@@ -247,7 +271,7 @@ export class ipfs {
             } catch (error) {
                 console.error(error);
             }
-            if (request1 !== null) {
+            if (request1 != undefined) {
                 return request1;
             }
         }
@@ -703,6 +727,9 @@ export class ipfs {
 
     async testIpfs() {
         let test_cid_download =  "QmccfbkWLYs9K3yucc6b3eSt8s8fKcyRRt24e3CDaeRhM1";
+        test_cid_download = 'bafybeifx7yeb55armcsxwwitkymga5xf53dxiarykms3ygqic223w5sk3m'
+        test_cid_download = 'QmSgvgwxZGaBLqkGyWemEDqikCqU52XxsYLKtdy3vGZ8uq'
+
         let test_download_path = "/tmp/test";
 
         let detect = null;
@@ -721,22 +748,13 @@ export class ipfs {
             detect = error;
         }
 
-        let test_daemon_start = null;
+        let test_daemon_start = null;   
         try {
             test_daemon_start = await this.daemonStart();
             console.log(test_daemon_start);
         }
         catch (error) {
             test_daemon_start = error;
-            console.error(error);
-        }
-
-        let test_ls_pin = null;
-        try {
-            test_ls_pin = await this.ipfsLsPin( { "hash": test_cid_download } );
-            console.log(test_ls_pin);
-        } catch (error) {
-            test_ls_pin = error;
             console.error(error);
         }
 
@@ -749,6 +767,16 @@ export class ipfs {
             console.error(error);
         }
 
+        let test_ls_pin = null;
+        try {
+            test_ls_pin = await this.ipfsLsPin( { "hash": test_cid_download } );
+            console.log(test_ls_pin);
+        } catch (error) {
+            test_ls_pin = error;
+            console.error(error);
+        }
+        
+
         let test_get_pinset = null;
         try {
             test_get_pinset = await this.ipfsGetPinset();
@@ -757,6 +785,7 @@ export class ipfs {
             test_get_pinset = error;
             console.error(error);
         }
+
 
         let test_add_path = null;
         try {
