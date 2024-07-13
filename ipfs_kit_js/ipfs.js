@@ -357,22 +357,28 @@ export class ipfs {
     async ipfsMkdir(src_path, kwargs = {}) {
         const this_path_split = src_path.split("/");
         let this_path = "";
-        const results = [];
-        for (let i = 0; i < this_path_split.length; i++) {
-            this_path += this_path_split[i] + "/";
-            const command1 = `export IPFS_PATH=${this.ipfsPath} &&  ` + this.pathString + ` ipfs files mkdir ${this_path}`;
-            const result1 = await new Promise((resolve, reject) => {
-                exec(command1, (error, stdout, stderr) => {
-                    if (error) {
-                        reject(error.message);
-                    } else {
-                        resolve(stdout);
-                    }
-                });
-            });
-            results.push(result1);
-        }
-        return results;
+        let  results = [];
+
+        return new Promise((resolve, reject) => {
+            for (let i = 0; i < this_path_split.length; i++) {
+                try{
+                    this_path += this_path_split[i] + "/";
+                    const ipfsMkdirCmd = `export IPFS_PATH=${this.ipfsPath} &&  ` + this.pathString + ` ipfs files mkdir ${this_path}`;
+                    exec(ipfsMkdirCmd, (error, stdout, stderr) => {
+                        if (error) {
+                            reject(error.message);
+                        }
+                        if(stdout){
+                            results.push(stdout);
+                            resolve(stdout);
+                        }
+                    });
+                }
+                catch (error) {
+                    console.error(error);
+                }
+            }
+        })
     }
 
 
@@ -409,103 +415,149 @@ export class ipfs {
     async ipfsAddPath(src_path, kwargs = {}) {
         let argstring = "";
         let ls_dir = src_path;
+        let ipfsAddPathCmd = "";
+        let ipfsAddPathResults = null;
         if (!fs.existsSync(src_path)) {
             throw new Error("path not found");
         }
-        if (fs.lstatSync(src_path).isFile()) {
-            await this.ipfsMkdir(path.dirname(src_path), kwargs);
-        } else if (fs.lstatSync(src_path).isDirectory()) {
-            await this.ipfsMkdir(src_path, kwargs);
-        }
-        argstring += `--recursive --to-files=${ls_dir} `;
-        const command1 = `ipfs add ${argstring}${ls_dir}`;
-        const result1 = await new Promise((resolve, reject) => {
-            exec(command1, (error, stdout, stderr) => {
-                if (error) {
-                    reject(error.message);
-                } else {
-                    resolve(stdout);
-                }
-            });
-        });
-        const results = {};
-        const result_split = result1.split("\n");
-        for (let i = 0; i < result_split.length; i++) {
-            const parts = result_split[i].split(" ");
-            if (parts.length > 1) {
-                results[parts[2]] = parts[1];
+        try{
+            if (fs.lstatSync(src_path).isFile()) {
+                await this.ipfsMkdir(path.dirname(src_path), kwargs);
+            } else if (fs.lstatSync(src_path).isDirectory()) {
+                await this.ipfsMkdir(src_path, kwargs);
             }
+            argstring += `--recursive --to-files=${ls_dir} `;
+            ipfsAddPathCmd  = `ipfs add ${argstring}${ls_dir}`;
+            await new Promise((resolve, reject) => {
+                exec(command1, (error, stdout, stderr) => {
+                    if (error) {
+                        ipfsAddPathResults = error.message;
+                        // reject(error.message);
+                    } else {
+                        ipfsAddPathResults = stdout;
+                        resolve(stdout);
+                    }
+                });
+            });    
         }
-        return results;
+        catch (error) {
+            console.error(error);
+        }
+        if (ipfsAddPathResults != null) {
+            const results = {};
+            const result_split = ipfsAddPathResults.split("\n");
+            for (let i = 0; i < result_split.length; i++) {
+                const parts = result_split[i].split(" ");
+                if (parts.length > 1) {
+                    results[parts[2]] = parts[1];
+                }
+            }
+            return results;
+        }
+        else{
+            return false;
+        }
     }
 
 
-    async ipfsRemovePath(path, kwargs = {}) {
+    async ipfsRemovePath(src_path, kwargs = {}) {
         let result1 = null;
         let result2 = null;
-        const stats = await this.ipfsStatPath(path, kwargs);
+        let ipfsRemovePathResults = null;
+        let ipfsRemovePathCmd = "";
+        let ipfsRemovePinResults = null;
+        let ipfsRemovePinCmd = "";
+        const stats = await this.ipfsStatPath(src_path, kwargs);
         if (Object.keys(stats).length === 0) {
             throw new Error("path not found");
         }
         const pin = stats['pin'];
         if (stats["type"] === "file") {
-            const command1 = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs files rm ${path}`;
-            result1 = await new Promise((resolve, reject) => {
-                exec(command1, (error, stdout, stderr) => {
-                    if (error) {
-                        reject(error.message);
-                    } else {
-                        resolve(stdout);
-                    }
+            try{
+                ipfsRemovePathCmd = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs files rm ${src_path}`;
+                await new Promise((resolve, reject) => {
+                    exec(ipfsRemovePathCmd, (error, stdout, stderr) => {
+                        if (error) {
+                            let ipfsRemovePathResults = error.message;
+                            reject(error.message);
+                        }
+                        if (stdout) {
+                            ipfsRemovePathResults = stdout;
+                            resolve(stdout);
+                        }
+                        if (stderr) {
+                            ipfsRemovePathResults = stderr;
+                            reject(stderr);
+                        }
+                    });
                 });
-            });
-            const command2 = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs pin rm ${pin}`;
-            result2 = await new Promise((resolve, reject) => {
-                exec(command2, (error, stdout, stderr) => {
-                    if (error) {
-                        reject(error.message);
-                    } else {
-                        resolve(stdout);
-                    }
+                ipfsRemovePinCmd = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs pin rm ${pin}`;
+                await new Promise((resolve, reject) => {
+                    exec(ipfsRemovePinCmd, (error, stdout, stderr) => {
+                        if (error) {
+                            ipfsRemovePinResults = error;
+                            reject(error.message);
+                        }
+                        if (stdout) {
+                            ipfsRemovePinResults = stdout;
+                            resolve(stdout);
+                        }
+                        if (stderr) {
+                            ipfsRemovePinResults = stderr;
+                            reject(stderr);
+                        }
+                    });
                 });
-            });
-            result2 = result2.split("\n");
+                ipfsRemovePinResults = ipfsRemovePinResults.split("\n");    
+            }
+            catch (error) {
+                console.error(error);
+            }
         } else if (stats["type"] === "directory") {
-            const contents = await this.ipfs_ls_path(path, kwargs);
+            const contents = await this.ipfsLsPath(path, kwargs);
             for (let i = 0; i < contents.length; i++) {
                 if (contents[i].length > 0) {
-                    result1 = await this.ipfs_remove_path(`${path}/${contents[i]}`, kwargs);
+                    ipfsRemovePinResults = await this.ipfsRemovePath(`${path}/${contents[i]}`, kwargs);
                 }
             }
         } else {
             throw new Error("unknown path type");
         }
         const results = {
-            "files_rm": result1,
-            "pin_rm": result2
+            "files_rm": ipfsRemovePathResults,
+            "pin_rm": ipfsRemovePinResults
         };
         return results;
     }
 
-    async ipfsStatPath(path, kwargs = {}) {
+    async ipfsStatPath(src_path, kwargs = {}) {
+        let ipfsStatsPathCmd = "";
+        let ipfsStatsPathResults = null;
         try {
-            const stat1 = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs files stat ${path}`;
-            const results1 = await new Promise((resolve, reject) => {
-                exec(stat1, (error, stdout, stderr) => {
+            ipfsStatsPathCmd = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs files stat ${src_path}`;
+            await new Promise((resolve, reject) => {
+                exec(ipfsStatsPathCmd, (error, stdout, stderr) => {
                     if (error) {
+                        ipfsStatsPathResults = error.message;
                         reject(error.message);
-                    } else {
+                    } 
+                    if (stdout) {
+                        ipfsStatsPathResults = stdout;
                         resolve(stdout);
+                    }
+                    if (stderr) {
+                        ipfsStatsPathResults = stderr;
+                        reject(stderr);
                     }
                 });
             });
-            const results1Split = results1.split("\n");
-            if (results1Split.length > 0 && Array.isArray(results1Split)) {
-                const pin = results1Split[0];
-                const size = parseFloat(results1Split[1].split(": ")[1]);
-                const culumulative_size = parseFloat(results1Split[2].split(": ")[1]);
-                const child_blocks = parseFloat(results1Split[3].split(": ")[1]);
-                const type = results1Split[4].split(": ")[1];
+            const resultsSplit = ipfsStatsPathResults.split("\n");
+            if (resultsSplit.length > 0 && Array.isArray(resultsSplit)) {
+                const pin = resultsSplit[0];
+                const size = parseFloat(resultsSplit[1].split(": ")[1]);
+                const culumulative_size = parseFloat(resultsSplit[2].split(": ")[1]);
+                const child_blocks = parseFloat(resultsSplit[3].split(": ")[1]);
+                const type = resultsSplit[4].split(": ")[1];
                 const results = {
                     "pin": pin,
                     "size": size,
@@ -518,56 +570,72 @@ export class ipfs {
                 return false;
             }
         } catch (error) {
-            console.error(error.message);
+            console.error(error);
             return false;
         }
     }
 
 
-    async ipfsNameResolve(kwargs = {}) {
-        let result1 = null;
+    async ipfsNameResolve(src_path, kwargs = {}) {
+        let ipfsNameResolveResults = null;
+        let ipfsNamePublishCmd = "";
+
         try {
-            const command1 = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString +  ` ipfs name resolve ${kwargs['path']}`;
-            result1 = await new Promise((resolve, reject) => {
-                exec(command1, (error, stdout, stderr) => {
-                    if (error) {
-                        reject(error.message);
-                    } else {
-                        resolve(stdout);
-                    }
-                });
+        ipfsNamePublishCmd = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString +  ` ipfs name resolve ${kwargs['path']}`;
+        await new Promise((resolve, reject) => {
+            exec(ipfsNamePublishCmd, (error, stdout, stderr) => {
+                if (error) {
+                    ipfsNameResolveResults = error.message;
+                    reject(error.message);
+                }
+                if (stdout) {
+                    ipfsNameResolveResults = stdout;
+                    resolve(stdout);
+                }
+                if (stderr) {
+                    ipfsNameResolveResults = stderr;
+                    reject(stderr);
+                }
             });
+        });
         } catch (error) {
-            result1 = error.message;
+            console.error(error);
         }
-        return result1;
+        return ipfsNamePublishCmd;
     }
 
-    async ipfsNamePublish(path, kwargs = {}) {
-        if (!fs.existsSync(path)) {
+    async ipfsNamePublish(src_path, kwargs = {}) {
+        if (!fs.existsSync(src_path)) {
             throw new Error("path not found");
         }
-        let results1 = null;
-        let results2 = null;
+        let ipfsNamePublishResults = null;
+        let ipfsNamePublishCmd = "";
         try {
-            const command1 = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs add --cid-version 1 ${path}`;
-            results1 = await new Promise((resolve, reject) => {
-                exec(command1, (error, stdout, stderr) => {
+            ipfsNamePublishCmd = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs add --cid-version 1 ${src_path}`;
+            await new Promise((resolve, reject) => {
+                exec(ipfsNamePublishCmd, (error, stdout, stderr) => {
                     if (error) {
+                        ipfsNamePublishResults = error.message;
                         reject(error.message);
-                    } else {
+                    }
+                    if (stdout) {
+                        ipfsNamePublishResults = stdout;
                         resolve(stdout);
+                    }
+                    if (stderr) {
+                        ipfsNamePublishResults = stderr;
+                        reject(stderr);
                     }
                 });
             });
-            results1 = results1.trim();
-            const cid = results1.split(" ")[1];
-            const fname = results1.split(" ")[2];
-            results1 = {
+            ipfsNamePublishResults = ipfsNamePublishResults.trim();
+            const cid = ipfsNamePublishResults.split(" ")[1];
+            const fname = ipfsNamePublishResults.split(" ")[2];
+            ipfsNamePublishResults = {
                 [fname]: cid
             };
         } catch (error) {
-            results1 = error.message;
+            ipfsNamePublishResults = error.message;
         }
 
         try {
