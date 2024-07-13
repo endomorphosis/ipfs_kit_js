@@ -184,23 +184,24 @@ export class ipfs {
         if ('cluster_name' in kwargs) {
             cluster_name = kwargs['cluster_name'];
         }
-
-        let results1 = null;
-        let results2 = null;
+        let ipfs_stop_systemctl_results = null;
+        let ipfs_stop_cmd_results = null;
+        let ipfs_stop_cmd = null;
+        let ipfs_stop_systemctl = null;
         let ipfs_ready = false;
 
         // Run this if root and check if it passes 
         if (os.userInfo().uid === 0) {
             try {
-                const command1 = "systemctl stop ipfs";
-                exec(command1, (error, stdout, stderr) => {
+                ipfs_stop_systemctl = "systemctl stop ipfs";
+                exec(ipfs_stop_systemctl, (error, stdout, stderr) => {
                     if (error) {
-                        results1 = error.message;
+                        ipfs_stop_systemctl_results = error.message;
                     } else {
-                        results1 = stdout;
+                        ipfs_stop_systemctl_results = stdout;
 
-                        const command2 = "ps -ef | grep ipfs | grep daemon | grep -v grep | wc -l";
-                        exec(command2, (error, stdout, stderr) => {
+                        let ps_daemon_cmd = "ps -ef | grep ipfs | grep daemon | grep -v grep | wc -l";
+                        exec(ps_daemon_cmd, (error, stdout, stderr) => {
                             if (!error && parseInt(stdout.trim()) === 0) {
                                 ipfs_ready = true;
                             }
@@ -208,29 +209,52 @@ export class ipfs {
                     }
                 });
             } catch (error) {
-                results1 = error.message;
+                ipfs_stop_systemctl = error;
             }
         }
 
         // Run this if user is not root or root user fails check if it passes
         if (os.userInfo().uid !== 0 || ipfs_ready === false) {
             try {
-                const command2 = "ps -ef | grep ipfs | grep daemon | grep -v grep | awk '{print $2}' | xargs kill -9";
-                exec(command2, (error, stdout, stderr) => {
+                let ps_daemon_cmd_results = null;
+                let ps_daemon_cmd = "ps -ef | grep ipfs | grep daemon | grep -v grep | awk '{print $2}'";
+                exec(ps_daemon_cmd, (error, stdout, stderr) => {
                     if (error) {
-                        results2 = error.message;
-                    } else {
-                        results2 = stdout;
+                        ps_daemon_cmd_results  = error.message;
+                    }
+                    if (stdout) {
+                        ps_daemon_cmd_results = stdout;
+                    }
+                    if (stderr) {
+                        ps_daemon_cmd_results = stderr;
                     }
                 });
             } catch (error) {
-                results2 = error.message;
+                ps_daemon_cmd_results = error;
             }
+
+            if (parseInt(ps_daemon_cmd_results) > 0) {
+                try {
+                    ipfs_stop_cmd = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs shutdown`;
+                    exec(ipfs_stop_cmd, (error, stdout, stderr) => {
+                        if (error) {
+                            ipfs_stop_cmd_results = error.message;
+                        } else {
+                            ipfs_stop_cmd_results = stdout;
+                        }
+                    });
+                } catch (error) {
+                    ipfs_stop_cmd_results = error;
+                }
+            }
+            else {
+                ipfs_stop_cmd_results = "No ipfs daemon running";
+            }    
         }
 
         const results = {
-            "systemctl": results1,
-            "bash": results2
+            "systemctl": ipfs_stop_systemctl,
+            "bash": ps_daemon_cmd_results
         };
 
         return results;
@@ -238,19 +262,27 @@ export class ipfs {
 
 
     async ipfsResize(size, kwargs = {}) {
-        const command1 = this.daemon_stop();
-        const command2 = this.pathString + ` ipfs config --json Datastore.StorageMax ${size}GB`;
-        const results1 = await new Promise((resolve, reject) => {
-            exec(command2, (error, stdout, stderr) => {
+        const stop_daemon_results = await this.daemon_stop();
+        const resize_daemon_cmd = this.pathString + ` ipfs config --json Datastore.StorageMax ${size}GB`;
+        let resize_daemon_cmd_results = null;
+        await new Promise((resolve, reject) => {
+            exec(resize_daemon_cmd, (error, stdout, stderr) => {
                 if (error) {
+                    resize_daemon_cmd_results = error.message;
                     reject(error.message);
-                } else {
+                }
+                if (stdout) {
+                    resize_daemon_cmd_results = stdout;
                     resolve(stdout);
+                }
+                if (stderr) {
+                    resize_daemon_cmd_results = stderr;
+                    reject(stderr);
                 }
             });
         });
-        const command3 = this.daemonStart();
-        return results1;
+        const start_daemon_cmd = await this.daemonStart();
+        return resize_daemon_cmd_results;
     }
 
     async ipfsLsPin(kwargs = {}) {
@@ -336,22 +368,31 @@ export class ipfs {
 
     async ipfsAddPin(pin, kwargs = {}) {
         const dirname = this.thisDir;
-        let result1;
+        let ipfsAddPinCmd = "";
+        let ipfsAddPinResults = null;
         try {
-            const command1 = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs pin add ${pin}`;
-            result1 = await new Promise((resolve, reject) => {
-                exec(command1, (error, stdout, stderr) => {
+            ipfsAddPinCmd = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs pin add ${pin}`;
+            await new Promise((resolve, reject) => {
+                exec(ipfsAddPinCmd, (error, stdout, stderr) => {
                     if (error) {
+                        ipfsAddPinResults = error.message;
                         reject(error.message);
-                    } else {
+                    }
+                    if (stdout) {
+                        ipfsAddPinResults = stdout;
                         resolve(stdout);
+                    }
+                    if (stderr) {
+                        ipfsAddPinResults = stderr;
+                        reject(stderr);
                     }
                 });
             });
         } catch (error) {
-            result1 = error;
+            console.error(error);
+            ipfsAddPinResults = error;
         }
-        return result1;
+        return ipfsAddPinResults;
     }
 
     async ipfsMkdir(src_path, kwargs = {}) {
@@ -381,37 +422,6 @@ export class ipfs {
         })
     }
 
-
-    async ipfsAddPath2(path, kwargs = {}) {
-        let ls_dir = [];
-        if (!fs.existsSync(path)) {
-            throw new Error("path not found");
-        }
-        if (fs.lstatSync(path).isFile()) {
-            ls_dir = [path];
-            await this.ipfsMkdir(path.dirname(path), kwargs);
-		} else if (fs.lstatSync(path).isDirectory()) {
-            await this.ipfsMkdir(path, kwargs);
-            ls_dir = fs.readdirSync(path).map(file => path.join(path, file));
-        }
-        const results1 = [];
-        for (let i = 0; i < ls_dir.length; i++) {
-            let argstring = ` --to-files=${ls_dir[i]} `;
-            const command1 = this.pathString + ` ipfs add ${argstring}${ls_dir[i]}`;
-            const result1 = await new Promise((resolve, reject) => {
-                exec(command1, (error, stdout, stderr) => {
-                    if (error) {
-                        reject(error.message);
-                    } else {
-                        resolve(stdout);
-                    }
-                });
-            });
-            results1.push(result1);
-        }
-        return results1;
-    }
-
     async ipfsAddPath(src_path, kwargs = {}) {
         let argstring = "";
         let ls_dir = src_path;
@@ -429,7 +439,7 @@ export class ipfs {
             argstring += `--recursive --to-files=${ls_dir} `;
             ipfsAddPathCmd  = `ipfs add ${argstring}${ls_dir}`;
             await new Promise((resolve, reject) => {
-                exec(command1, (error, stdout, stderr) => {
+                exec(ipfsAddPathCmd, (error, stdout, stderr) => {
                     if (error) {
                         ipfsAddPathResults = error.message;
                         // reject(error.message);
