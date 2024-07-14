@@ -178,7 +178,6 @@ export class ipfs {
 
     }
 
-
     async daemonStop(kwargs = {}) {
         let cluster_name;
         if ('cluster_name' in this) {
