@@ -35,11 +35,11 @@ export class ipfs {
                     this.role = 'leecher';
                 }
             }
-            if (Object.keys(meta).includes('cluster_name') && meta['cluster_name'] !== null) {
-                this.cluster_name = meta['cluster_name'];
+            if (Object.keys(meta).includes('clusterName') && meta['clusterName'] !== null) {
+                this.clusterName = meta['clusterName'];
             }
-            if (Object.keys(meta).includes('ipfs_path') && meta['ipfs_path'] !== null) {
-                this.ipfsPath = meta['ipfs_path'];
+            if (Object.keys(meta).includes('ipfsPath') && meta['ipfsPath'] !== null) {
+                this.ipfsPath = meta['ipfsPath'];
             }
             else{
                 this.ipfsPath = path.join(this.localPath, "ipfs")
@@ -55,6 +55,9 @@ export class ipfs {
             else{
                 this.ipfsPath = path.join(path.join(os.homedir(), '.cache'), 'ipfs');
             }
+        }
+        if(Object.keys(this).includes('role') === false){
+            this.role = 'leecher';
         }
 
         // if (!homedir_files.includes(".ipfs") && !ipfs_path_files.includes("ipfs") && os.path.existsSync(ipfs_path)){

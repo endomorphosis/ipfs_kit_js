@@ -9,40 +9,71 @@ const exists = promisify(fs.exists);
 
 class ipfs_kit {
     constructor(resources, meta = null) {
-        this.resources = resources;
+        this.thisDir = path.dirname(import.meta.url);
+        if (this.thisDir.startsWith("file://")) {
+            this.thisDir = this.thisDir.replace("file://", "");
+        }
         this.meta = meta;
-        this.thisDir = path.dirname(__filename);
-        process.env.PATH += ":" + path.join(this.thisDir, "bin");
-        this.pathString = "PATH=" + process.env.PATH;
-
-        if (meta) {
-            if (meta.config) {
-                this.config = meta.config;
+        this.resources = resources;
+        this.path = process.env.PATH;
+        this.path = this.path + ":" + path.join(this.thisDir, "bin")
+        this.pathString = "PATH="+ this.path
+        let localPath;
+        if (os.userInfo().uid === 0) {
+            localPath = '/cloudkit_storage/';
+        } else {
+            localPath = path.join(os.homedir(), '.cache');
+        }
+        this.localPath = localPath
+        if (meta !== null && typeof meta === 'object') {
+            if (Object.keys(meta).includes('config') && meta['config'] !== null) {
+                this.config = meta['config'];
             }
-            if (meta.role) {
-                this.role = meta.role;
-                if (!["master", "worker", "leecher"].includes(this.role)) {
-                    this.role = "leecher";
+            if (Object.keys(meta).includes('role') && meta['role'] !== null && meta['role'] !== undefined) {
+                this.role = meta['role'];
+                if (!['master', 'worker', 'leecher'].includes(this.role)) {
+                    throw new Error('role is not either master, worker, leecher');
+                } else {
+                    this.role = 'leecher';
                 }
             }
-            if (meta.cluster_name) {
-                this.cluster_name = meta.cluster_name;
+            if (Object.keys(meta).includes('clusterName') && meta['clusterName'] !== null) {
+                this.clusterName = meta['clusterName'];
             }
-            if (meta.ipfs_path) {
-                this.ipfs_path = meta.ipfs_path;
+            if (Object.keys(meta).includes('ipfsPath') && meta['ipfsath'] !== null) {
+                this.ipfsPath = meta['ipfsPath'];
             }
-
-            if (["leecher", "worker", "master"].includes(this.role)) {
-                this.ipfs = new Ipfs(resources, meta);
-                this.ipget = new Ipget(resources, meta);
+            else{
+                this.ipfsPath = path.join(this.localPath, "ipfs")
             }
-            if (this.role === "worker") {
-                this.ipfs_cluster_follow = new IpfsClusterFollow(resources, meta);
+            if (this.role === 'leecher' || this.role === 'worker' || this.role === 'master') {
+                this.commands = {};
             }
-            if (this.role === "master") {
-                this.ipfs_cluster_ctl = new IpfsClusterCtl(resources, meta);
-                this.ipfs_cluster_service = new IpfsClusterService(resources, meta);
+        }
+        if (Object.keys(this).includes('ipfsPath') === false) {
+            if (os.userInfo().uid === 0) {
+                this.ipfsPath = '/ipfs/';
             }
+            else{
+                this.ipfsPath = path.join(path.join(os.homedir(), '.cache'), 'ipfs');
+            }
+        }
+        if(Object.keys(this).includes('role') === false){
+            this.role = 'leecher';
+        }
+        if(Object.keys(this).includes('clusterName') === false){
+            this.clusterName = 'cloudkit_storage';
+        }
+        if (["leecher", "worker", "master"].includes(this.role)) {
+            this.ipfs = new Ipfs(resources, meta);
+            this.ipget = new Ipget(resources, meta);
+        }
+        if (this.role === "worker") {
+            this.IpfsClusterFollow = new IpfsClusterFollow(resources, meta);
+        }
+        if (this.role === "master") {
+            this.IpfsClusterCtl = new IpfsClusterCtl(resources, meta);
+            this.IpfsClusterService = new IpfsClusterService(resources, meta);
         }
     }
 
@@ -58,19 +89,19 @@ class ipfs_kit {
                 return this.ipfs.ipfs_get_pinset(kwargs);
             case "ipfs_follow_list":
                 if (this.role !== "master") {
-                    return this.ipfs_cluster_ctl.ipfs_follow_list(kwargs);
+                    return this.IpfsClusterCtl.ipfs_follow_list(kwargs);
                 } else {
                     throw new Error("role is not master");
                 }
             case "ipfs_follow_ls":
                 if (this.role !== "master") {
-                    return this.ipfs_cluster_follow.ipfs_follow_ls(kwargs);
+                    return this.IpfsClusterFollow.ipfs_follow_ls(kwargs);
                 } else {
                     throw new Error("role is not master");
                 }
             case "ipfs_follow_info":
                 if (this.role !== "master") {
-                    return this.ipfs_cluster_follow.ipfs_follow_info(kwargs);
+                    return this.IpfsClusterFollow.ipfs_follow_info(kwargs);
                 } else {
                     throw new Error("role is not master");
                 }
@@ -80,13 +111,13 @@ class ipfs_kit {
                 return this.ipfs.ipfs_ls_pinset(kwargs);
             case "ipfs_cluster_ctl_add_pin":
                 if (this.role === "master") {
-                    return this.ipfs_cluster_ctl.ipfs_cluster_ctl_add_pin(kwargs);
+                    return this.IpfsClusterCtl.ipfs_cluster_ctl_add_pin(kwargs);
                 } else {
                     throw new Error("role is not master");
                 }
             case "ipfs_cluster_ctl_rm_pin":
                 if (this.role === "master") {
-                    return this.ipfs_cluster_ctl.ipfs_cluster_ctl_rm_pin(kwargs);
+                    return this.IpfsClusterCtl.ipfs_cluster_ctl_rm_pin(kwargs);
                 } else {
                     throw new Error("role is not master");
                 }
@@ -573,127 +604,146 @@ class ipfs_kit {
         try {
             test_ipfs_kit_start = await this.ipfsKitStart();
         } catch (e) {
-            test_ipfs_kit_start = e.message;
+            test_ipfs_kit_start = e;
+            console.error(e);
         }
 
         try {
             test_ipfs_kit_ready = await this.ipfsKitReady();
         } catch (e) {
-            test_ipfs_kit_ready = e.message;
+            test_ipfs_kit_ready = e;
+            console.error(e);
         }
 
         try {
             test_load_collection = await this.loadCollection();
         } catch (e) {
-            test_load_collection = e.message;
+            test_load_collection = e;
+            console.error(e);
         }
 
         try{
             test_ipfs_get_config = await this.ipfsGetConfig();
         }
         catch(e){
-            test_ipfs_get_config = e.message;
+            test_ipfs_get_config = e;
+            console.error(e);
         }
 
         try{
             test_ipfs_set_config = await this.ipfsSetConfig();
         }
         catch(e){
-            test_ipfs_set_config = e.message;
+            test_ipfs_set_config = e;
+            console.error(e);
         }
 
         try{
             test_ipfs_name_resolve = await this.nameResolve();
         }
         catch(e){
-            test_ipfs_name_resolve = e.message;
+            test_ipfs_name_resolve = e;
+            console.error(e);
         }
 
         try{
             test_ipfs_name_publish = await this.namePublish();
         }
         catch(e){
-            test_ipfs_name_publish = e.message;
+            test_ipfs_name_publish = e;
+            console.error(e);
         }
 
         try{
             test_ipfs_get_config_value = await this.ipfsGetConfigValue();
         }
         catch(e){
-            test_ipfs_get_config_value = e.message;
+            test_ipfs_get_config_value = e;
+            console.error(e);
         }
 
         try{
             test_ipfs_set_config_value = await this.ipfsSetConfigValue();
         }
         catch(e){
-            test_ipfs_set_config_value = e.message;
+            test_ipfs_set_config_value = e;
+            console.error(e);
         }
 
         try {
             test_update_collection_ipfs = await this.updateCollectionIpfs();
         }
         catch (e) {
-            test_update_collection_ipfs = e.message;
+            test_update_collection_ipfs = e;
+            console.error(e);
         }
 
         try {
             test_ipfs_add_path = await this.ipfsAddPath();
         }
         catch (e) {
-            test_ipfs_add_path = e.message;
+            test_ipfs_add_path = e;
+            console.error(e);
         }
 
         try {
             test_ipfs_remove_path = await this.ipfsRemovePath();
         }
         catch (e) {
-            test_ipfs_remove_path = e.message;
+            test_ipfs_remove_path = e;
+            console.error(e);
         }
 
         try {
             test_ipfs_ls_path = await this.ipfsLsPath();
         }
         catch (e) {
-            test_ipfs_ls_path = e.message;
+            test_ipfs_ls_path = e;
+            console.error(e);
         }
 
         try {
             test_ipfs_get_pinset = await this.ipfsGetPinset();
         } catch (e) {
-            test_ipfs_get_pinset = e.message;
+            test_ipfs_get_pinset = e;
+            console.error(e);
         }
 
         try {
             test_ipfs_add_pin = await this.ipfsAddPin
         } catch (e) {
-            test_ipfs_add_pin = e.message;
+            test_ipfs_add_pin = e;
+            console.error(e);
         }
 
         try {
             test_ipfs_remove_pin = await this.ipfsRemovePin();
         } catch (e) {
-            test_ipfs_remove_pin = e.message;
+            test_ipfs_remove_pin = e;
+            console.error(e);
         }
 
         try {
             test_ipget_download_object = await this.ipgetDownloadObject();
         } catch (e) {
-            test_ipget_download_object = e.message;
+            test_ipget_download_object = e;
+            console.error(e);
         }
 
         try {
             test_ipfs_upload_object = await this.ipfsUploadObject();
         }
         catch (e) {
-            test_ipfs_upload_object = e.message;
+            test_ipfs_upload_object = e;
+            console.error(e);
         }
 
         try {
             test_ipfs_kit_stop = await this.ipfsKitStop();
         }
         catch (e) {
-            test_ipfs_kit_stop = e.message;
+            test_ipfs_kit_stop = e;
+            console.error(e);
         }
 
         let results = {
@@ -723,7 +773,9 @@ if (import.meta.url === import.meta.url) {
         clusterLocation: "/ip4/167.99.96.231/tcp/9096/p2p/12D3KooWKw9XCkdfnf8CkAseryCgS3VVoGQ6HUAkY91Qc6Fvn4yv",
         secret: "96d5952479d0a2f9fbf55076e5ee04802f15ae5452b5faafc98e2bd48cf564d3",
     };
-    const ipfs_kit_instance = new ipfs_kit();
+    const ipfs_kit_instance = new ipfs_kit(null, meta);
     const test_ipfs = await ipfs_kit_instance.test_ipfs_kit();
     console.log(test_ipfs);
 }
+
+
