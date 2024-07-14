@@ -4,7 +4,7 @@ import os from "os";
 import path from "path";
 
 
-export class IPFSClusterCtl {
+export class IpfsClusterCtl {
     constructor(resources, meta = null) {
         this.config = {};
         this.thisDir = path.dirname(import.meta.url);
@@ -124,7 +124,7 @@ export class IPFSClusterCtl {
     }
 
 
-    async ipfs_cluster_ctl_execute(args) {
+    async ipfsClusterCtlExecute(args) {
         if (!this.options.includes(args[0])) {
             console.error(`"${args[0]}" is not a valid command.`);
             return;
@@ -228,13 +228,17 @@ export class IPFSClusterCtl {
     }
 
     ipfsClusterCtlStatus() {
+        let ipfsClusterCtlStatusCmd = this.pathString + " ipfs-cluster-ctl status";
+        let ipfsClusterCtlStatusResults = null;
         try {
-            const command = this.pathString + " ipfs-cluster-ctl status";
-            const results = execSync(command, { encoding: 'utf8' });
-            return results;
+            ipfsClusterCtlStatusResults = execSync(command, { encoding: 'utf8' });
         } catch (error) {
-            console.error(`Error executing ipfs-cluster-ctl status: ${error.message}`);
-            return null;
+            ipfsClusterCtlStatusResults = error;
+            console.error(`Error executing command "${ipfsClusterCtlStatusCmd}" : ${error}`);
+        }
+
+        return {
+            ipfsClusterCtlStatus :ipfsClusterCtlStatusResults
         }
     }
 

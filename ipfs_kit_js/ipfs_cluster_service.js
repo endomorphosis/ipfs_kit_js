@@ -26,7 +26,7 @@ export class IpfsClusterService {
         }
     }
 
-    async ipfs_cluster_service_start() {
+    async ipfsClusterServiceStart() {
         if (os.userInfo().uid === 0) {
             const command = this.pathString + " systemctl start ipfs-cluster-service";
             const results = execSync(command).toString();
@@ -39,20 +39,24 @@ export class IpfsClusterService {
         }
     }
 
-    async ipfs_cluster_service_stop() {
+    async ipfsClusterServiceStop() {
+        let ipfsClusterServiceCmd = null
+        let ipfsClusterServiceResults = null;
         if (os.userInfo().uid === 0) {
-            const command = this.pathString + " systemctl stop ipfs-cluster-service";
-            const results = execSync(command).toString();
-            return results;
+            ipfsClusterServiceCmd = this.pathString + " systemctl stop ipfs-cluster-service";
+            ipfsClusterServiceResults = execSync(command).toString();
         }
         else{
-            const command = "ps -ef | grep ipfs-cluster-service | grep -v grep | awk '{print $2}' | xargs kill -9"
-            const results = execSync(command).toString();
-            return results;
+            ipfsClusterServiceCmd = "ps -ef | grep ipfs-cluster-service | grep -v grep | awk '{print $2}' | xargs kill -9"
+            ipfsClusterServiceResults = execSync(command).toString();
         }
+
+        return {
+            "ipfsClusterService": ipfsClusterServiceResults
+        };
     }
 
-    async ipfs_cluster_service_status() {
+    async ipfsClusterServiceStatus() {
         if (os.userInfo().uid === 0) {
             const command = this.pathString + " systemctl status ipfs-cluster-service";
             const results = execSync(command).toString();
@@ -65,7 +69,7 @@ export class IpfsClusterService {
         }
     }
 
-    async test_ipfs_cluster_service() {
+    async testIpfsClusterService() {
         let detect;
         try {
             detect = execSync(this.pathString + ' which ipfs-cluster-service').toString();
@@ -73,35 +77,41 @@ export class IpfsClusterService {
             detect = '';
         }
     
-        let test_service_start = null;
+        let testServiceStart = null;
         try{
-            test_service_start = await this.ipfs_cluster_service_start();
+            testServiceStart = await this.ipfsClusterServiceStart();
         }
         catch(error){
             console.error(error);
-            test_service_start = error;
+            testServiceStart = error;
         }
         
-        let test_service_stop = null;
+        let testServiceStop = null;
         try{
-            test_service_stop = await this.ipfs_cluster_service_stop();
+            testServiceStop = await this.ipfsClusterServiceStop();
         }
         catch(error){
             console.error(error);
-            test_service_stop = error;
+            testServiceStop = error;
         }
 
         let results = {
             "detect": detect,
-            "test_service_start": test_service_start,
-            "test_service_stop": test_service_stop
+            "testServiceStart": testServiceStart,
+            "testServiceStop": testServiceStop
         };
     }
 }
 
 async function test(){
-    const thisIpfsClusterService = new IpfsClusterService();
-    const results = await thisIpfsClusterService.test_ipfs_cluster_service();
+    const meta = {
+        role: "master",
+        clusterName: "cloudkit_storage",
+        clusterLocation: "/ip4/167.99.96.231/tcp/9096/p2p/12D3KooWKw9XCkdfnf8CkAseryCgS3VVoGQ6HUAkY91Qc6Fvn4yv",
+        secret: "96d5952479d0a2f9fbf55076e5ee04802f15ae5452b5faafc98e2bd48cf564d3",
+    };
+    const thisIpfsClusterService = new IpfsClusterService(null, meta);
+    const results = await thisIpfsClusterService.testIpfsClusterService();
     console.log(results);
 }
 

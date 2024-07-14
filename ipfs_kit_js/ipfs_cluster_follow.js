@@ -79,9 +79,9 @@ export class IpfsClusterFollow {
                     if (error) {
                         console.error(`Error running ipfs-cluster-follow: ${error.message}`);
                         if (error.message.includes("command not found")){
-                            let InstallIPFS = new install_ipfs.InstallIPFS();
-                            let installResults = InstallIPFS.installIPFSClusterFollow();
-                            let configResults = InstallIPFS.configIPFSClusterFollow();
+                            let InstallIPFS = new install_ipfs.InstallIpfs();
+                            let installResults = InstallIPFS.installIpfsClusterFollow();
+                            let configResults = InstallIPFS.configIpfsClusterFollow();
                             console.log(`Install IPFS Cluster Follow results: ${installResults}`);
                             console.log(`Configure IPFS Cluster Follow results: ${configResults}`);
                             console.log(`Attempting to run ipfs-cluster-follow again`);
