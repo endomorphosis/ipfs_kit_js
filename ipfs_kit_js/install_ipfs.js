@@ -30,11 +30,13 @@ export class InstallIpfs {
         this.path = this.path + ":" + path.join(this.thisDir, "bin")
         this.pathString = "PATH=" + this.path
         this.ipfsTestInstall = this.ipfsTestInstall.bind(this);
-        this.ipfs_dist_tar = "https://dist.ipfs.tech/kubo/v0.26.0/kubo_v0.26.0_linux-amd64.tar.gz";
-        this.ipfs_follow_dist_tar = "https://dist.ipfs.tech/ipfs-cluster-follow/v1.0.8/ipfs-cluster-follow_v1.0.8_linux-amd64.tar.gz";
-        this.ipfs_cluster_dist_tar = "https://dist.ipfs.tech/ipfs-cluster-ctl/v1.0.8/ipfs-cluster-ctl_v1.0.8_linux-amd64.tar.gz";
-        this.ipfs_cluster_service_dist_tar = "https://dist.ipfs.tech/ipfs-cluster-service/v1.0.8/ipfs-cluster-service_v1.0.8_linux-amd64.tar.gz";
+        this.ipfs_dist_tar = "https://dist.ipfs.tech/kubo/v0.29.0/kubo_v0.29.0_linux-amd64.tar.gz";
+        this.libp2p_relay_dist_tar = "https://dist.ipfs.tech/libp2p-relay/v0.3.0/libp2p-relay_v0.3.0_linux-amd64.tar.gz";
+        this.ipfs_follow_dist_tar = "https://dist.ipfs.tech/ipfs-cluster-follow/v1.1.1/ipfs-cluster-follow_v1.1.1_linux-amd64.tar.gz";
+        this.ipfs_cluster_dist_tar = "https://dist.ipfs.tech/ipfs-cluster-ctl/v1.1.1/ipfs-cluster-ctl_v1.1.1_linux-amd64.tar.gz";
+        this.ipfs_cluster_service_dist_tar = "https://dist.ipfs.tech/ipfs-cluster-service/v1.1.1/ipfs-cluster-service_v1.1.1_linux-amd64.tar.gz";
         this.ipfs_ipget_dist_tar = "https://dist.ipfs.tech/ipget/v0.10.0/ipget_v0.10.0_linux-amd64.tar.gz";
+        // NOTE: implement libp2p relay install
         if (meta !== null) {
             this.config = meta.config ? meta.config : null;
             this.secret = meta.secret ? meta.secret : null;
@@ -60,11 +62,11 @@ export class InstallIpfs {
                     fs.mkdirSync(this.ipfsPath, { recursive: true });
                 }
                 let testDisk = new test_fio.TestFio();
-                this.diskName = testDisk.disk_device_name_from_location(this.ipfsPath);
+                this.diskName = testDisk.diskDeviceNameFromLocation(this.ipfsPath);
                 this.diskStats = {
-                    disk_size: testDisk.disk_device_total_capacity(this.diskName),
-                    disk_used: testDisk.disk_device_used_capacity(this.diskName),
-                    disk_avail: testDisk.disk_device_avail_capacity(this.diskName),
+                    disk_size: testDisk.diskDeviceTotalCapacity(this.diskName),
+                    disk_used: testDisk.diskDeviceUsedCapacity(this.diskName),
+                    disk_avail: testDisk.diskDeviceAvailCapacity(this.diskName),
                     disk_name: this.diskName
                 };
             } else {
@@ -79,11 +81,11 @@ export class InstallIpfs {
                     }
                 }
                 let testDisk = new test_fio.TestFio();
-                this.diskName = testDisk.disk_device_name_from_location(this.ipfsPath);
+                this.diskName = testDisk.diskDeviceNameFromLocation(this.ipfsPath);
                 this.diskStats = {
-                    disk_size: testDisk.disk_device_total_capacity(this.diskName),
-                    disk_used: testDisk.disk_device_used_capacity(this.diskName),
-                    disk_avail: testDisk.disk_device_avail_capacity(this.diskName),
+                    disk_size: testDisk.diskDeviceTotalCapacity(this.diskName),
+                    disk_used: testDisk.diskDeviceUsedCapacity(this.diskName),
+                    disk_avail: testDisk.diskDeviceAvailCapacity(this.diskName),
                     disk_name: this.diskName
                 };
             }

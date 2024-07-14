@@ -157,10 +157,10 @@ export class IpfsClusterFollow {
     }
 
     async ipfsFollowList(clusterName = this.clusterName) {
-        let command = this.pathString + ` ipfs-cluster-follow ${clusterName} list`;
-
+        let ipfsFollowListCmd = this.pathString + ` ipfs-cluster-follow ${clusterName} list`;
+        let ipfsFollowListResults = null;
         try {
-            let results = execSync(command, { encoding: 'utf8' }).trim();
+            ipfsFollowListResults = execSync(command, { encoding: 'utf8' }).trim();
 
             if (results.length > 0) {
                 let resultsArray = results.split("\n");

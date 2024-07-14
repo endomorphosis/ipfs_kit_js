@@ -509,7 +509,7 @@ class IpfsKit {
             ipfsGetConfig: ipfsGetConfigResults
         };
     }
-    
+
     async ipfsSetConfig(newConfig) {
         let ipfsSetConfigResults = null;
         try{
@@ -726,7 +726,7 @@ class IpfsKit {
         }
     }
 
-    async test_ipfs_kit() {
+    async testIpfsKit() {
 
         let test_ipfs_kit_start = null;
         let test_ipfs_kit_ready = null;
@@ -920,8 +920,8 @@ if (import.meta.url === import.meta.url) {
         clusterLocation: "/ip4/167.99.96.231/tcp/9096/p2p/12D3KooWKw9XCkdfnf8CkAseryCgS3VVoGQ6HUAkY91Qc6Fvn4yv",
         secret: "96d5952479d0a2f9fbf55076e5ee04802f15ae5452b5faafc98e2bd48cf564d3",
     };
-    const ipfs_kit_instance = new ipfs_kit(null, meta);
-    const test_ipfs = await ipfs_kit_instance.test_ipfs_kit();
+    const ipfs_kit_instance = new IpfsKit(null, meta);
+    const test_ipfs = await ipfs_kit_instance.testIpfsKit();
     console.log(test_ipfs);
 }
 

@@ -20,7 +20,7 @@ export class TestFio {
         }
     }
 
-    disk_device_name_from_location(location) {
+    diskDeviceNameFromLocation(location) {
         let directory_tree = location.split("/");
 
         const command = "df -h";
@@ -56,7 +56,7 @@ export class TestFio {
     }
 
 
-    disk_device_total_capacity(device) {
+    diskDeviceTotalCapacity(device) {
         const command = "df -h";
         let df = execSync(command).toString();
         df = df.split("\n");
@@ -72,7 +72,7 @@ export class TestFio {
         return null;
     }
 
-    disk_device_used_capacity(device) {
+    diskDeviceUsedCapacity(device) {
         const command = "df -h";
         let df = execSync(command).toString();
         df = df.split("\n");
@@ -88,7 +88,7 @@ export class TestFio {
         return null;
     }
 
-    disk_device_avail_capacity(device) {
+    diskDeviceAvailCapacity(device) {
         const command = "df -h";
         let df = execSync(command).toString();
         df = df.split("\n");
@@ -104,7 +104,7 @@ export class TestFio {
         return null;
     }
 
-    disk_speed_4k(location) {
+    diskSpeed4k(location) {
         const tempFile = tmp.fileSync({ postfix: '.iso', dir: location });
         const timestamp_0 = Date.now();
         const command = `dd if=/dev/zero of=${tempFile.name} bs=4k count=8k conv=fdatasync`;
@@ -121,11 +121,11 @@ export class TestFio {
 
 
     stats(location, kwargs = {}) {
-        const disk_device = this.disk_device_name_from_location(location);
-        const disk_capacity = this.disk_device_total_capacity(disk_device);
-        const disk_used = this.disk_device_used_capacity(disk_device);
-        const disk_avail = this.disk_device_avail_capacity(disk_device);
-        const { read_speed: disk_read_speed, write_speed: disk_write_speed } = this.disk_speed_4k(location);
+        const disk_device = this.diskDeviceNameFromLocation(location);
+        const disk_capacity = this.diskDeviceTotalCapacity(disk_device);
+        const disk_used = this.diskDeviceUsedCapacity(disk_device);
+        const disk_avail = this.diskDeviceAvailCapacity(disk_device);
+        const { read_speed: disk_read_speed, write_speed: disk_write_speed } = this.diskSpeed4k(location);
         const results = {
             disk_device,
             disk_capacity,

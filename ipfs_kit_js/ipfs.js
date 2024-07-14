@@ -175,7 +175,6 @@ export class ipfs {
             }
         }
 
-
     }
 
     async daemonStop(kwargs = {}) {
