@@ -4,7 +4,7 @@ import path, { parse } from 'path';
 import fs from 'fs';
 import * as install_ipfs from './install_ipfs.js';
 
-export class IPFSClusterFollow {
+export class IpfsClusterFollow {
     constructor(resources, meta) {
         this.thisDir = path.dirname(import.meta.url);
         if (this.thisDir.startsWith("file://")) {
@@ -34,8 +34,8 @@ export class IPFSClusterFollow {
             this.ipfsPath = meta.ipfs_path;
         }
 
-        if (meta.cluster_name) {
-            this.clusterName = meta.cluster_name;
+        if (meta.clusterName) {
+            this.clusterName = meta.clusterName;
         }
     }
 
@@ -210,7 +210,7 @@ export class IPFSClusterFollow {
         } catch (error) {
             console.error(`Error executing ipfs-cluster-follow info: ${error.message}`);
             if (error.message.includes("500")){
-                let InstallIPFS = new install_ipfs.InstallIPFS(undefined, { role: 'leecher', cluster_name: clusterName, ipfs_path: this.ipfsPath });
+                let InstallIPFS = new install_ipfs.InstallIPFS(undefined, { role: 'leecher', clusterName: clusterName, ipfs_path: this.ipfsPath });
                 let installResults = InstallIPFS.installIPFSClusterFollow();
                 let configResults = InstallIPFS.configIPFSClusterFollow();
                 console.log(`Install IPFS Cluster Follow results: ${installResults}`);
@@ -223,19 +223,19 @@ export class IPFSClusterFollow {
         return resultsDict;
     }
 
-    async ipfs_follow_run(kwargs = {}) {
-        let cluster_name = this.cluster_name;
-        if ('cluster_name' in kwargs) {
-            cluster_name = kwargs['cluster_name'];
+    async ipfsFollowRun(kwargs = {}) {
+        let clusterName = this.clusterName;
+        if ('clusterName' in kwargs) {
+            clusterName = kwargs['clusterName'];
         }
 
-        const command = this.pathString + ` ipfs-cluster-follow ${cluster_name} run`;
+        const command = this.pathString + ` ipfs-cluster-follow ${clusterName} run`;
         let results = execSync(command).toString();
         results = results.split("\n");
         return results;
     }
 
-    async test_ipfs_cluster_follow() {
+    async testIpfsClusterFollow() {
         let detect;
         try {
             detect = execSync( this.pathString + ' which ipfs-cluster-follow').toString();
@@ -245,7 +245,7 @@ export class IPFSClusterFollow {
         
         let test_follow_run = null;
         try{
-            test_follow_run = await this.ipfs_follow_run();
+            test_follow_run = await this.ipfsFollowRun();
         }
         catch(error){
             console.error(error);
@@ -282,12 +282,14 @@ export class IPFSClusterFollow {
 }
 
 async function test(){
-
     const meta = {
-        cluster_name: "test"
+        role: "master",
+        clusterName: "cloudkit_storage",
+        clusterLocation: "/ip4/167.99.96.231/tcp/9096/p2p/12D3KooWKw9XCkdfnf8CkAseryCgS3VVoGQ6HUAkY91Qc6Fvn4yv",
+        secret: "96d5952479d0a2f9fbf55076e5ee04802f15ae5452b5faafc98e2bd48cf564d3",
     };
-    const thisIpfsClusterFollow = new IpfsClusterFollow(meta);
-    const results = await thisIpfsClusterFollow.test_ipfs_cluster_follow();
+    const thisIpfsClusterFollow = new IpfsClusterFollow(null, meta);
+    const results = await thisIpfsClusterFollow.testIpfsClusterFollow();
     console.log(results);
 }
 
