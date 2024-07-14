@@ -80,59 +80,59 @@ class IpfsKit {
     async call(method, kwargs) {
         switch (method) {
             case "ipfs_kit_stop":
-                return this.ipfs_kit_stop(kwargs);
+                return this.ipfsKitStop(kwargs);
             case "ipfs_kit_start":
-                return this.ipfs_kit_start(kwargs);
+                return this.ipfsKitStart(kwargs);
             case "ipfs_kit_ready":
-                return this.ipfs_kit_ready(kwargs);
+                return this.ipfsKitReady(kwargs);
             case "ipfs_get_pinset":
-                return this.ipfs.ipfs_get_pinset(kwargs);
+                return this.ipfs.ipfsGetPinset(kwargs);
             case "ipfs_follow_list":
                 if (this.role !== "master") {
-                    return this.ipfsClusterCtl.ipfs_follow_list(kwargs);
+                    return this.ipfsClusterCtl.ipfsFollowList(kwargs);
                 } else {
                     throw new Error("role is not master");
                 }
             case "ipfs_follow_ls":
                 if (this.role !== "master") {
-                    return this.ipfsClusterFollow.ipfs_follow_ls(kwargs);
+                    return this.ipfsClusterFollow.ipfsFollowLs(kwargs);
                 } else {
                     throw new Error("role is not master");
                 }
             case "ipfs_follow_info":
                 if (this.role !== "master") {
-                    return this.ipfsClusterFollow.ipfs_follow_info(kwargs);
+                    return this.ipfsClusterFollow.ipfsFollowInfo(kwargs);
                 } else {
                     throw new Error("role is not master");
                 }
             case "ipfs_cluster_get_pinset":
-                return this.ipfs_cluster_get_pinset(kwargs);
+                return this.ipfsClusterGetPinset(kwargs);
             case "ipfs_ls_pinset":
-                return this.ipfs.ipfs_ls_pinset(kwargs);
+                return this.ipfs.ipfsLsPinset(kwargs);
             case "ipfs_cluster_ctl_add_pin":
                 if (this.role === "master") {
-                    return this.ipfsClusterCtl.ipfs_cluster_ctl_add_pin(kwargs);
+                    return this.ipfsClusterCtl.ipfsClusterCtlAddPin(kwargs);
                 } else {
                     throw new Error("role is not master");
                 }
             case "ipfs_cluster_ctl_rm_pin":
                 if (this.role === "master") {
-                    return this.ipfsClusterCtl.ipfs_cluster_ctl_rm_pin(kwargs);
+                    return this.ipfsClusterCtl.ipfsClusterRemovePin(kwargs);
                 } else {
                     throw new Error("role is not master");
                 }
             case "ipfs_add_pin":
-                return this.ipfs_add_pin(kwargs);
+                return this.ipfsAddPin(kwargs);
             case "ipfs_remove_pin":
-                return this.ipfs_remove_pin(kwargs);
+                return this.ipfsRemovePin(kwargs);
             case "ipfs_get":
-                return this.ipfs_get(kwargs);
+                return this.ipget.ipgetDownloadObject(kwargs);
             case "ipget_download_object":
                 this.method = 'download_object';
-                return this.ipget.ipget_download_object(kwargs);
+                return this.ipget.ipgetDownloadObject(kwargs);
             case "ipfs_upload_object":
                 this.method = 'ipfs_upload_object';
-                return this.ipfs.ipfs_upload_object(kwargs);
+                return this.ipfs.ipfsUploadObject(kwargs);
             case "load_collection":
                 return this.loadCollection(kwargs);
             default:
@@ -147,33 +147,33 @@ class IpfsKit {
         }
 
         let ready = false;
-        let ipfs_ready = false;
-        let ipfs_cluster_ready = false;
+        let ipfsReady = false;
+        let ipfsClusterReady = false;
 
         let psDaemonCmd  = "ps -ef | grep ipfs | grep daemon | grep -v grep | wc -l";
         let psDaemonCmdResults = execSync(psDaemonCmd).toString().trim();
         if (parseInt(execute1) > 0) {
-            ipfs_ready = true;
+            ipfsReady = true;
         }
 
         if (this.role === "master") {
-            return this.ipfsClusterService.ipfs_cluster_service_ready();
+            return this.ipfsClusterService.ipfsClusterServiceReady();
         } else if (this.role === "worker") {
-            let data_ipfs_follow = this.ipfsClusterFollow.ipfs_follow_info();
-            if (data_ipfs_follow.cluster_peer_online === 'true' && data_ipfs_follow.ipfs_peer_online === 'true' && data_ipfs_follow.clusterName === clusterName) {
-                ipfs_cluster_ready = true;
+            let dataIpfsFollow = this.ipfsClusterFollow.ipfsFollowInfo();
+            if (dataIpfsFollow.cluster_peer_online === 'true' && dataIpfsFollow.ipfs_peer_online === 'true' && dataIpfsFollow.cluster_name === clusterName) {
+                ipfsClusterReady = true;
             }
         }
 
         if (this.role === "leecher" && ipfs_ready) {
             ready = true;
-        } else if (this.role !== "leecher" && ipfs_ready && ipfs_cluster_ready) {
-            this.ipfs_follow_info = data_ipfs_follow;
+        } else if (this.role !== "leecher" && ipfsReady && ipfsClusterReady) {
+            this.ipfsFollowInfo = dataIpfsFollow;
             ready = true;
         } else {
             ready = {
-                ipfs: ipfs_ready,
-                ipfs_cluster: ipfs_cluster_ready
+                ipfs: ipfsReady,
+                ipfsCluster: ipfsClusterReady
             };
         }
         return ready;
@@ -195,7 +195,7 @@ class IpfsKit {
 
         let ipget;
         try {
-            ipget = this.ipget.ipget_download_object(cid, dstPath);
+            ipget = this.ipget.ipgetDownloadObject(cid, dstPath);
         } catch (e) {
             console.error(e);
             ipget = e.toString();
@@ -234,7 +234,7 @@ class IpfsKit {
 
         let ipget;
         try {
-            ipget = await this.ipget.ipget_download_object({ cid: pin, path: dstPath });
+            ipget = await this.ipget.ipgetDownloadObject({ cid: pin, path: dstPath });
         } catch (e) {
             ipget = e.toString();
             console.error(e);
@@ -243,10 +243,10 @@ class IpfsKit {
         let ipfsAddPinResult = null;
         let ipfsClusterCtlAddPinResult = null;
         if (this.role === "master") {
-            ipfsClusterCtlAddPinResult = await this.ipfsClusterCtl.ipfs_cluster_ctl_add_pin(dstPath, kwargs);
-            ipfsAddPinResult = await this.ipfs.ipfs_add_pin(pin, kwargs);
+            ipfsClusterCtlAddPinResult = await this.ipfsClusterCtl.ipfsClusterCtlAddPin(dstPath, kwargs);
+            ipfsAddPinResult = await this.ipfs.ipfsAddPin(pin, kwargs);
         } else if (this.role === "worker" || this.role === "leecher") {
-            ipfsAddPinResult = await this.ipfs.ipfs_add_pin(pin, kwargs);
+            ipfsAddPinResult = await this.ipfs.ipfsAddPin(pin, kwargs);
         }
 
         return {
@@ -259,10 +259,10 @@ class IpfsKit {
         let ipfsAddPathResult = null;
         let ipfsClusterCtlAddPathResult = null;
         if (this.role === "master") {
-            ipfsAddPathResult = await this.ipfs.ipfs_add_path(path, kwargs);
-            ipfsClusterCtlAddPathResult = await this.ipfsClusterCtl.ipfs_cluster_ctl_add_path(path, kwargs);
+            ipfsAddPathResult = await this.ipfs.ipfsAddPath(path, kwargs);
+            ipfsClusterCtlAddPathResult = await this.ipfsClusterCtl.ipfsClusterCtlAddPath(path, kwargs);
         } else if (this.role === "worker" || this.role === "leecher") {
-            ipfsAddPathResult = await this.ipfs.ipfs_add_path(path, kwargs);
+            ipfsAddPathResult = await this.ipfs.ipfsAddPath(path, kwargs);
         }
 
         return {
@@ -274,7 +274,7 @@ class IpfsKit {
     async ipfsLsPath(path, kwargs = {}) {
         let ipfsLsPathResults = null
         try{
-            ipfsLsPathResults = await this.ipfs.ipfs_ls_path(path, kwargs);
+            ipfsLsPathResults = await this.ipfs.ipfsLsPath(path, kwargs);
             ipfsLsPathResults = ipfsLsPathResults.filter(item => item !== "");    
         }
         catch(e){
@@ -290,7 +290,7 @@ class IpfsKit {
     async nameResolve(kwargs = {}) {
         let ipfsNameResolveResults = null;
         try{
-            ipfsNameResolveResults = await this.ipfs.ipfs_name_resolve(kwargs);
+            ipfsNameResolveResults = await this.ipfs.ipfsNameResolve(kwargs);
         }
         catch(e){
             ipfsNameResolveResults = e;
@@ -304,7 +304,7 @@ class IpfsKit {
     async namePublish(path, kwargs = {}) {
         let ipfsNamePublishResults = null;
         try{
-            ipfsNamePublishResults = await this.ipfs.ipfs_name_publish(path, kwargs);
+            ipfsNamePublishResults = await this.ipfs.ipfsNamePublish(path, kwargs);
         }
         catch(e){
             ipfsNamePublishResults = e;
@@ -319,10 +319,10 @@ class IpfsKit {
         let ipfsClusterCtlRemovePathResults = null;
         let ipfsRemovePathResults = null;
         if (this.role === "master") {
-            ipfsClusterCtlRemovePathResults = await this.ipfsClusterCtl.ipfs_cluster_ctl_remove_path(path, kwargs);
-            ipfsRemovePathResults = await this.ipfs.ipfs_remove_path(path, kwargs);
+            ipfsClusterCtlRemovePathResults = await this.ipfsClusterCtl.ipfsClusterCtlRemovePath(path, kwargs);
+            ipfsRemovePathResults = await this.ipfs.ipfsRemovePath(path, kwargs);
         } else if (this.role === "worker" || this.role === "leecher") {
-            ipfsRemovePathResults = await this.ipfs.ipfs_remove_path(path, kwargs);
+            ipfsRemovePathResults = await this.ipfs.ipfsRemovePath(path, kwargs);
         }
 
         return {
@@ -335,10 +335,10 @@ class IpfsKit {
         let ipfsClusterRemovePinResults = null;
         let ipfsRemovePinResults = null;
         if (this.role === "master") {
-            ipfsClusterRemovePinResults = await this.ipfsClusterCtl.ipfs_cluster_ctl_remove_pin(pin, kwargs);
-            ipfsRemovePinResults = await this.ipfs.ipfs_remove_pin(pin, kwargs);
+            ipfsClusterRemovePinResults = await this.ipfsClusterCtl.ipfsClusterCtlRemovePin(pin, kwargs);
+            ipfsRemovePinResults = await this.ipfs.ipfsRemovePin(pin, kwargs);
         } else if (this.role === "worker" || this.role === "leecher") {
-            ipfsRemovePinResults = await this.ipfs.ipfs_remove_pin(pin, kwargs);
+            ipfsRemovePinResults = await this.ipfs.ipfsRemovePin(pin, kwargs);
         }
 
         return {
@@ -351,17 +351,17 @@ class IpfsKit {
     async testInstall() {
         if (this.role === "master") {
             return {
-                ipfs_cluster_service: await this.install_ipfs.ipfs_cluster_service_test_install(),
-                ipfs_cluster_ctl: await this.install_ipfs.ipfs_cluster_ctl_test_install(),
-                ipfs: await this.install_ipfs.ipfs_test_install()
+                ipfs_cluster_service: await this.installIpfs.ipfsClusterServiceTestInstall(),
+                ipfs_cluster_ctl: await this.installIpfs.ipfsClusterCtlTestInstall(),
+                ipfs: await this.installIpfs.ipfsTestInstall()
             };
         } else if (this.role === "worker") {
             return {
-                ipfs_cluster_follow: await this.install_ipfs.ipfs_cluster_follow_test_install(),
-                ipfs: await this.install_ipfs.ipfs_test_install()
+                ipfs_cluster_follow: await this.installIpfs.ipfsClusterFollowTestInstall(),
+                ipfs: await this.installIpfs.ipfsTestInstall()
             };
         } else if (this.role === "leecher") {
-            return await this.install_ipfs.ipfs_test_install();
+            return await this.installIpfs.ipfsTestInstall();
         } else {
             throw new Error("role is not master, worker, or leecher");
         }
@@ -370,7 +370,7 @@ class IpfsKit {
     async ipfsGetPinset() {
         let ipfsPinsetResults = null;
         try{
-            ipfsPinsetResults = await this.ipfs.ipfs_get_pinset();
+            ipfsPinsetResults = await this.ipfs.ipfsGetPinset();
         }
         catch(e){
             ipfsPinsetResults = e;
@@ -378,12 +378,19 @@ class IpfsKit {
         }
 
         let ipfsClusterPinsetResults = null;
-        if (this.role === "master") {
-            ipfsClusterPinsetResults = await this.ipfs_cluster_ctl.ipfs_cluster_get_pinset();
-        } else if (this.role === "worker") {
-            ipfsClusterPinsetResults = await this.ipfsClusterFollow.ipfs_follow_list();
-        } else if (this.role === "leecher") {
-            // No action for leecher
+
+        try{
+            if (this.role === "master") {
+                ipfsClusterPinsetResults = await ipfsClusterctl.ipfsClusterGetPinset();
+            } else if (this.role === "worker") {
+                ipfsClusterPinsetResults = await this.ipfsClusterFollow.ipfsFollowList();
+            } else if (this.role === "leecher") {
+                // No action for leecher
+            }    
+        }
+        catch(e){
+            ipfsClusterPinsetResults = e;
+            console.error(e);
         }
 
         return {
@@ -399,20 +406,20 @@ class IpfsKit {
 
         if (this.role === "master") {
             try {
-                ipfsClusterService = await this.ipfsClusterService.ipfs_cluster_service_stop();
+                ipfsClusterService = await this.ipfsClusterService.ipfsClusterserviceStop();
             } catch (e) {
                 ipfsClusterService = e;
                 console.error(e);
             }
             try {
-                ipfs = await this.ipfs.daemon_stop();
+                ipfs = await this.ipfs.daemonStop();
             } catch (e) {
                 ipfs = e;
                 console.error(e);
             }
         } else if (this.role === "worker") {
             try {
-                ipfsClusterFollow = await this.ipfsClusterFollow.ipfs_follow_stop();
+                ipfsClusterFollow = await this.ipfsClusterFollow.ipfsFollowStop();
             } catch (e) {
                 ipfsClusterFollow = e;
                 console.error(e);
@@ -452,7 +459,7 @@ class IpfsKit {
                 console.error(e);   
             }
             try {
-                ipfsClusterService = await this.ipfsClusterService.ipfs_cluster_service_start();
+                ipfsClusterService = await this.ipfsClusterService.ipfsClusterServiceStart();
             } catch (e) {
                 ipfsClusterService = e;
                 console.error(e);
@@ -461,18 +468,21 @@ class IpfsKit {
             try {
                 ipfs = await this.ipfs.daemonStart();
             } catch (e) {
-                ipfs = e.message;
+                ipfs = e
+                console.error(e);
             }
             try {
-                ipfsClusterFollow = await this.ipfsClusterFollow.ipfs_follow_start();
+                ipfsClusterFollow = await this.ipfsClusterFollow.ipfsFollowStart();
             } catch (e) {
-                ipfsClusterFollow = e.message;
+                ipfsClusterFollow = e;
+                console.error(e);
             }
         } else if (this.role === "leecher") {
             try {
                 ipfs = await this.ipfs.daemonStart();
             } catch (e) {
-                ipfs = e.message;
+                ipfs = e;
+                console.error(e);
             }
         }
 
@@ -487,7 +497,7 @@ class IpfsKit {
     async ipfsGetConfig() {
         let ipfsGetConfigResults = null;
         try{
-            ipfsGetConfigResults = await this.ipfs.ipfs_get_config();
+            ipfsGetConfigResults = await this.ipfs.ipfsGetConfig();
             this.ipfsConfig = ipfsGetConfigResults;
         }
         catch(e){
@@ -499,10 +509,11 @@ class IpfsKit {
             ipfsGetConfig: ipfsGetConfigResults
         };
     }
+    
     async ipfsSetConfig(newConfig) {
         let ipfsSetConfigResults = null;
         try{
-            ipfsSetConfigResults = await this.ipfs.ipfs_set_config(newConfig);
+            ipfsSetConfigResults = await this.ipfs.ipfsSetConfig(newConfig);
             this.ipfsConfig = ipfsSetConfigResults;
         }
         catch(e){
@@ -518,7 +529,7 @@ class IpfsKit {
     async ipfsGetConfigValue(key) {
         let ipfsGetConfigValueResults = null;
         try{
-            ipfsGetConfigValueResults = await this.ipfs.ipfs_get_config_value(key);
+            ipfsGetConfigValueResults = await this.ipfs.ipfsGetConfigValue(key);
         }
         catch(e){
             ipfsGetConfigValueResults = e;
@@ -533,7 +544,7 @@ class IpfsKit {
     async ipfsSetConfigValue(key, value) {
         let ipfsSetConfigValueResults = null;
         try{
-            ipfsSetConfigValueResults = await this.ipfs.ipfs_set_config_value(key, value);
+            ipfsSetConfigValueResults = await this.ipfs.ipfsSetConfigValue(key, value);
         }
         catch(e){
             ipfsSetConfigValueResults = e;
