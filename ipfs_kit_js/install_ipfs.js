@@ -30,12 +30,12 @@ export class InstallIpfs {
         this.path = this.path + ":" + path.join(this.thisDir, "bin")
         this.pathString = "PATH=" + this.path
         this.ipfsTestInstall = this.ipfsTestInstall.bind(this);
-        this.ipfs_dist_tar = "https://dist.ipfs.tech/kubo/v0.29.0/kubo_v0.29.0_linux-amd64.tar.gz";
-        this.libp2p_relay_dist_tar = "https://dist.ipfs.tech/libp2p-relay/v0.3.0/libp2p-relay_v0.3.0_linux-amd64.tar.gz";
-        this.ipfs_follow_dist_tar = "https://dist.ipfs.tech/ipfs-cluster-follow/v1.1.1/ipfs-cluster-follow_v1.1.1_linux-amd64.tar.gz";
-        this.ipfs_cluster_dist_tar = "https://dist.ipfs.tech/ipfs-cluster-ctl/v1.1.1/ipfs-cluster-ctl_v1.1.1_linux-amd64.tar.gz";
-        this.ipfs_cluster_service_dist_tar = "https://dist.ipfs.tech/ipfs-cluster-service/v1.1.1/ipfs-cluster-service_v1.1.1_linux-amd64.tar.gz";
-        this.ipfs_ipget_dist_tar = "https://dist.ipfs.tech/ipget/v0.10.0/ipget_v0.10.0_linux-amd64.tar.gz";
+        this.ipfsDistTar = "https://dist.ipfs.tech/kubo/v0.29.0/kubo_v0.29.0_linux-amd64.tar.gz";
+        this.libp2pRelayDistTar = "https://dist.ipfs.tech/libp2p-relay/v0.3.0/libp2p-relay_v0.3.0_linux-amd64.tar.gz";
+        this.ipfsFollowDistTar = "https://dist.ipfs.tech/ipfs-cluster-follow/v1.1.1/ipfs-cluster-follow_v1.1.1_linux-amd64.tar.gz";
+        this.ipfsClusterCtlDistTar = "https://dist.ipfs.tech/ipfs-cluster-ctl/v1.1.1/ipfs-cluster-ctl_v1.1.1_linux-amd64.tar.gz";
+        this.ipfsClusterServiceDistTar = "https://dist.ipfs.tech/ipfs-cluster-service/v1.1.1/ipfs-cluster-service_v1.1.1_linux-amd64.tar.gz";
+        this.ipfsIpgetDistTar = "https://dist.ipfs.tech/ipget/v0.10.0/ipget_v0.10.0_linux-amd64.tar.gz";
         // NOTE: implement libp2p relay install
         if (meta !== null) {
             this.config = meta.config ? meta.config : null;
@@ -132,7 +132,7 @@ export class InstallIpfs {
             try {
                 const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ipfs-'));
                 const tarFile = path.join(tmpDir, "kubo.tar.gz");
-                execSync(`wget ${this.ipfs_dist_tar} -O ${tarFile}`);
+                execSync(`wget ${this.ipfsDistTar} -O ${tarFile}`);
                 execSync(`tar -xvzf ${tarFile} -C ${tmpDir}`);
                 if (os.userInfo().username == "root") {
                     execSync(`cd ${tmpDir}/kubo && bash install.sh`);
@@ -163,7 +163,7 @@ export class InstallIpfs {
         } else {
             console.log('ipfs-cluster-follow is not installed, proceeding with installation.');
             // Downloading tarball
-            const url = this.ipfs_follow_dist_tar;
+            const url = this.ipfsFollowDistTar;
             const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ipfs-cluster-follow-'));
             const tarPath = path.join(tmpDir, url.split('/')[-1]);
             let thisDir = this.thisDir || decodeURI(path.dirname(new URL(import.meta.url).pathname));
@@ -231,8 +231,7 @@ export class InstallIpfs {
 
         const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ipfs-cluster-ctl-'));
         const tarPath = path.join(tmpDir, 'ipfs-cluster-ctl.tar.gz');
-        // const url = "https://dist.ipfs.tech/ipfs-cluster-ctl/v1.0.8/ipfs-cluster-ctl_v1.0.8_linux-amd64.tar.gz";
-        const url = this.ipfs_cluster_dist_tar;
+        const url = this.ipfsClusterCtlDistTar;
         // Download and extract the tarball
         const file = fs.createWriteStream(tarPath);
         return new Promise((resolve, reject) => {
@@ -288,7 +287,7 @@ export class InstallIpfs {
 
         const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ipfs-cluster-service-'));
         const tarPath = path.join(tmpDir, 'ipfs-cluster-service.tar.gz');
-        const url = this.ipfs_cluster_service_dist_tar;
+        const url = this.ipfsClusterServiceDistTar;
         // const url = "https://dist.ipfs.tech/ipfs-cluster-service/v1.0.8/ipfs-cluster-service_v1.0.8_linux-amd64.tar.gz";
         let thisDir = this.thisDir || decodeURI(path.dirname(new URL(import.meta.url).pathname));
 
@@ -359,7 +358,7 @@ export class InstallIpfs {
     //     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ipget-'));
     //     const tarPath = path.join(tmpDir, 'ipget.tar.gz');
     //     // const url = "https://dist.ipfs.tech/ipget/v0.10.0/ipget_v0.10.0_linux-amd64.tar.gz";
-    //     const url = this.ipfs_ipget_dist_tar;
+    //     const url = this.ipfsIpgetDistTar;
     //     // Download the tarball
     //     return new Promise((resolve, reject) => {
     //         https.get(url, (response) => {
@@ -428,11 +427,8 @@ export class InstallIpfs {
         if (!secret) throw new Error("secret is None");
 
         let thisDir = this.thisDir;
-        let home_dir = os.homedir();
         let service_path = "";
         let cluster_path = path.join(ipfsPath, clusterName);
-        let run_daemon = "";
-        let init_cluster_daemon_results = "";
         let results = {};
 
         try {
@@ -1446,7 +1442,7 @@ export class InstallIpfs {
     async installAndConfigure() {
         let results = {};
         if (['leecher', 'worker', 'master'].includes(this.role)) {
-            let ipget = await this.installIPGet( this.ipfs_ipget_dist_tar, path.join(this.tmpDir, 'ipget.tar.gz'), this.tmpDir);
+            let ipget = await this.installIPGet( this.ipfsIpgetDistTar, path.join(this.tmpDir, 'ipget.tar.gz'), this.tmpDir);
             let ipfs = await this.installIpfsDaemon();
             let ipfsConfig = await this.configIpfs(this.clusterName, this.ipfsPath);
             let ipfsExecute = await this.runIpfsDaemon();
