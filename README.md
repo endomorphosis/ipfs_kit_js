@@ -1,3 +1,8 @@
+# IPFS kit
+
+This is a nodejs library that installs and configures ipfs services through Kubo, ipfs_cluster_service based on the contents in the config file, for example whether the node is supposed to operate as a master, worker, or leecher.
+
+
 # IPFS Huggingface Bridge:
 
 for huggingface transformers python library visit:
@@ -41,7 +46,3 @@ https://github.com/endomorphosis/ipfs_accelerate/
 
 Author - Benjamin Barber
 QA - Kevin De Haan
-
-# IPFS kit
-
-This is a nodejs library that installs and configures ipfs services through Kubo, ipfs_cluster_service based on the contents in the config file, for example whether the node is supposed to operate as a master, worker, or leecher.
