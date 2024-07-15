@@ -15,6 +15,9 @@ https://github.com/endomorphosis/ipfs_transformers_js
 for orbitdb_kit nodejs library visit:
 https://github.com/endomorphosis/orbitdb_kit/
 
+for fireproof_kit nodejs library visit:
+https://github.com/endomorphosis/fireproof_kit
+
 for ipfs_kit python library visit:
 https://github.com/endomorphosis/ipfs_kit/
 
