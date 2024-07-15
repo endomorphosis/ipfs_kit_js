@@ -45,7 +45,7 @@ export class ipget {
     }
 
 
-    async ipget_download_object(kwargs = {}) {
+    async ipgetDownloadObject(kwargs = {}) {
         // NOTE: Make sure this function can download both files and folders 
         if (!kwargs.cid) {
             throw new Error("cid not found in kwargs");
@@ -95,15 +95,15 @@ export class ipget {
     async testIpget() {
         
         try {
-            const which_ipget = execSync(this.pathString + ' which ipget').toString().trim();
-            const ipget_download_object = await this.ipget_download_object({
+            const whichIpget = execSync(this.pathString + ' which ipget').toString().trim();
+            const ipgetDownloadObject = await this.ipgetDownloadObject({
                 cid: "QmccfbkWLYs9K3yucc6b3eSt8s8fKcyRRt24e3CDaeRhM1",
                 path: "/tmp/test"
             });
-            if (ipget_download_object.cid !== "QmccfbkWLYs9K3yucc6b3eSt8s8fKcyRRt24e3CDaeRhM1") {
+            if (ipgetDownloadObject.cid !== "QmccfbkWLYs9K3yucc6b3eSt8s8fKcyRRt24e3CDaeRhM1") {
                 return false;
             }
-            if (fs.existsSync("/tmp/test") === false || fs.statSync("/tmp/test").size != ipget_download_object.filesize) {
+            if (fs.existsSync("/tmp/test") === false || fs.statSync("/tmp/test").size != ipgetDownloadObject.filesize) {
                 return false;
             }
             return true;
@@ -115,7 +115,7 @@ export class ipget {
 
 // create a test that runs only if the script is run directly, and it is an es Module without require
 if (import.meta.url === import.meta.url) {
-    const ipget_instance = new ipget();
-    const test_ipget = await ipget_instance.testIpget();
-    console.log(test_ipget);
+    const ipgetInstance = new ipget();
+    const testIpget = await ipgetInstance.testIpget();
+    console.log(testIpget);
 }
