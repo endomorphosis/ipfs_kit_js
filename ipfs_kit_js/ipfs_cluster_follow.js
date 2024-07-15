@@ -30,8 +30,8 @@ export class IpfsClusterFollow {
             throw new Error("role is not either master, worker, leecher");
         }
 
-        if (meta.ipfs_path) {
-            this.ipfsPath = meta.ipfs_path;
+        if (meta.ipfsPath) {
+            this.ipfsPath = meta.ipfsPath;
         }
 
         if (meta.clusterName) {
@@ -243,38 +243,38 @@ export class IpfsClusterFollow {
             detect = '';
         }
         
-        let test_follow_run = null;
+        let testFollowRun = null;
         try{
-            test_follow_run = await this.ipfsFollowRun();
+            testFollowRun = await this.ipfsFollowRun();
         }
         catch(error){
             console.error(error);
-            test_follow_run = error;
+            testFollowRun = error;
         }
 
-        let test_follow_list = null;
+        let testFollowList = null;
         try{
-            test_follow_list = await this.ipfsFollowList();
+            testFollowList = await this.ipfsFollowList();
         }
         catch(error){
             console.error(error);
-            test_follow_list = error;
+            testFollowList = error;
         }
 
-        let test_follow_info = null;
+        let testFollowInfo = null;
         try{
-            test_follow_info = await this.ipfsFollowInfo();
+            testFollowInfo = await this.ipfsFollowInfo();
         }
         catch(error){
             console.error(error);
-            test_follow_info = error;
+            testFollowInfo = error;
         }
 
         let results = {
             "detect": detect,
-            "test_follow_run": test_follow_run,
-            "test_follow_list": test_follow_list,
-            "test_follow_info": test_follow_info
+            "testFollowRun": testFollowRun,
+            "testFollowList": testFollowList,
+            "testFollowInfo": testFollowInfo
         };
         
     }

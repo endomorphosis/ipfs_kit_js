@@ -245,8 +245,8 @@ export class IpfsClusterCtl {
     testIPFSClusterCtl() {
         let detect = null;
 
-        let detect_cmd = this.pathString + " which ipfs-cluster-ctl";
-        exec(detect_cmd, (error, stdout) => {
+        let detectCmd = this.pathString + " which ipfs-cluster-ctl";
+        exec(detectCmd, (error, stdout) => {
             if (error) {
                 console.error(`Error detecting ipfs-cluster-ctl: ${error}`);
                 detect = error;                    
@@ -255,81 +255,81 @@ export class IpfsClusterCtl {
             }
         });
         
-        let test_ipfs_cluster_add_pin = null;
+        let testIpfsClusterAddPin = null;
         try {
-            test_ipfs_cluster_add_pin = this.ipfsClusterCtlAddPin("/tmp/test", {});
+            testIpfsClusterAddPin = this.ipfsClusterCtlAddPin("/tmp/test", {});
         }
         catch (error) {
             console.error(error);
-            test_ipfs_cluster_add_pin = error;
+            testIpfsClusterAddPin = error;
         }
 
-        let test_ipfs_cluster_remove_pin = null;
+        let testIpfsClusterRemovePin = null;
         try {
-            test_ipfs_cluster_remove_pin = this.ipfsClusterCtlRemovePin("/tmp/test");
+            testIpfsClusterRemovePin = this.ipfsClusterCtlRemovePin("/tmp/test");
         }
         catch (error) {
             console.error(error);
-            test_ipfs_cluster_remove_pin = error;
+            testIpfsClusterRemovePin = error;
         }
 
-        let test_ipfs_cluster_add_pin_recursive = null;
+        let testIpfsClusterAddPinRecursive = null;
         try {
-            test_ipfs_cluster_add_pin_recursive = this.ipfsClusterCtlAddPinRecursive("/tmp/test", {});
+            testIpfsClusterAddPinRecursive = this.ipfsClusterCtlAddPinRecursive("/tmp/test", {});
         }
         catch (error) {
             console.error(error);
-            test_ipfs_cluster_add_pin_recursive = error;
+            testIpfsClusterAddPinRecursive = error;
         }
 
-        let test_ipfs_cluster_ctl_execute = null;
+        let testIpfsClusterCtlExecute = null;
         try {
-            test_ipfs_cluster_ctl_execute = this.ipfs_cluster_ctl_execute(["peers", "ls"]);
+            testIpfsClusterCtlExecute = this.ipfsClusterCtlExecute(["peers", "ls"]);
         }
         catch (error) {
             console.error(error);
-            test_ipfs_cluster_ctl_execute = error;
+            testIpfsClusterCtlExecute = error;
         }
 
-        let test_get_pinset = null;
+        let testGetPinset = null;
 
         try {
-            test_get_pinset = this.getPinset();
+            testGetPinset = this.getPinset();
         }
         catch (error) {
             console.error(error);
-            test_get_pinset = error;
+            testGetPinset = error;
         }
 
-        let test_parse_pinset_data = null;
+        let testParsePinsetData = null;
 
         try {
-            test_parse_pinset_data = this.parsePinsetData("test");
+            testParsePinsetData = this.parsePinsetData("test");
         }
         catch (error) {
-            test_parse_pinset_data = error;
+            testParsePinsetData = error;
             console.error(error);
         }
 
-        let test_ipfs_cluster_ctl_status = null;
+        let testIpfsClusterCtlStatus = null;
 
         try {
-            test_ipfs_cluster_ctl_status = this.ipfsClusterCtlStatus();
+            testIpfsClusterCtlStatus = this.ipfsClusterCtlStatus();
         }
         catch (error) {
-            test_ipfs_cluster_ctl_status = error;
+            testIpfsClusterCtlStatus = error;
             console.error(error);
         }
 
         let results = {
             "detect": detect,
-            "test_ipfs_cluster_add_pin": test_ipfs_cluster_add_pin,
-            "test_ipfs_cluster_remove_pin": test_ipfs_cluster_remove_pin,
-            "test_ipfs_cluster_add_pin_recursive": test_ipfs_cluster_add_pin_recursive,
-            "test_ipfs_cluster_ctl_execute": test_ipfs_cluster_ctl_execute,
-            "test_get_pinset": test_get_pinset,
-            "test_parse_pinset_data": test_parse_pinset_data,
-            "test_ipfs_cluster_ctl_status": test_ipfs_cluster_ctl_status
+            "testIpfsClusterAddPin": testIpfsClusterAddPin,
+            "testIpfsClusterRemovePin": testIpfsClusterRemovePin,
+            "testIpfsClusterAddPinRecursive": testIpfsClusterAddPinRecursive,
+            "testIpfsClusterCtlExecute": testIpfsClusterCtlExecute,
+            "testGetPinset": testGetPinset,
+            "testParsePinsetData": testParsePinsetData,
+            "testIpfsClusterCtlStatus": testIpfsClusterCtlStatus
         };
 
         return results;
