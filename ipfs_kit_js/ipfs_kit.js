@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { promisify } from 'util';
+import Ipfs from './ipfs.js';
 
 const mkdir = promisify(fs.mkdir);
 const exists = promisify(fs.exists);

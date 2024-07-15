@@ -79,9 +79,9 @@ export class IpfsClusterFollow {
                     if (error) {
                         console.error(`Error running ipfs-cluster-follow: ${error.message}`);
                         if (error.message.includes("command not found")){
-                            let InstallIPFS = new install_ipfs.InstallIpfs();
-                            let installResults = InstallIPFS.installIpfsClusterFollow();
-                            let configResults = InstallIPFS.configIpfsClusterFollow();
+                            let InstallIpfs = new install_ipfs.InstallIpfs();
+                            let installResults = InstallIpfs.installIpfsClusterFollow();
+                            let configResults = InstallIpfs.configIpfsClusterFollow();
                             console.log(`Install IPFS Cluster Follow results: ${installResults}`);
                             console.log(`Configure IPFS Cluster Follow results: ${configResults}`);
                             console.log(`Attempting to run ipfs-cluster-follow again`);
@@ -210,9 +210,9 @@ export class IpfsClusterFollow {
         } catch (error) {
             console.error(`Error executing ipfs-cluster-follow info: ${error.message}`);
             if (error.message.includes("500")){
-                let InstallIPFS = new install_ipfs.InstallIPFS(undefined, { role: 'leecher', clusterName: clusterName, ipfs_path: this.ipfsPath });
-                let installResults = InstallIPFS.installIPFSClusterFollow();
-                let configResults = InstallIPFS.configIPFSClusterFollow();
+                let InstallIpfs = new install_ipfs.InstallIpfs(undefined, { role: 'leecher', clusterName: clusterName, ipfs_path: this.ipfsPath });
+                let installResults = InstallIpfs.installIPFSClusterFollow();
+                let configResults = InstallIpfs.configIPFSClusterFollow();
                 console.log(`Install IPFS Cluster Follow results: ${installResults}`);
                 console.log(`Configure IPFS Cluster Follow results: ${configResults}`);
                 console.log(`Attempting to run ipfs-cluster-follow info again`);
