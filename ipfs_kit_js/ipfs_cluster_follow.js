@@ -4,14 +4,14 @@ import path, { parse } from 'path';
 import fs from 'fs';
 import * as install_ipfs from './install_ipfs.js';
 
-export class IpfsClusterFollow {
+export default class IpfsClusterFollow {
     constructor(resources, meta) {
         this.thisDir = path.dirname(import.meta.url);
         if (this.thisDir.startsWith("file://")) {
             this.thisDir = this.thisDir.replace("file://", "");
         }
         this.path = process.env.PATH;
-        this.path = this.path + ":" + path.join(this.this_dir, "bin")
+        this.path = this.path + ":" + path.join(this.thisDir, "bin")
         this.pathString = "PATH="+ this.path
 
         this.config = {};
@@ -294,5 +294,5 @@ async function test(){
 }
 
 if (import.meta.url === import.meta.url) {
-    test();
+    // test();
 }

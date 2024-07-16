@@ -29,9 +29,8 @@ export default class ipfs {
             }
             if (Object.keys(meta).includes('role') && meta['role'] !== null) {
                 this.role = meta['role'];
-                if (!['master', 'worker', 'leecher'].includes(this.role)) {
-                    throw new Error('role is not either master, worker, leecher');
-                } else {
+                if (['master', 'worker', 'leecher'].includes(this.role) === false) {
+                    console.error('role is not either master, worker, leecher');
                     this.role = 'leecher';
                 }
             }
@@ -455,7 +454,7 @@ export default class ipfs {
             for (let i = 0; i < thisPathSplit.length; i++) {
                 try{
                     thisPath += thisPathSplit[i] + "/";
-                    const ipfsMkdirCmd = `export IPFS_PATH=${this.ipfsPath} &&  ` + this.pathString + ` ipfs files mkdir ${this_path}`;
+                    const ipfsMkdirCmd = `export IPFS_PATH=${this.ipfsPath} &&  ` + this.pathString + ` ipfs files mkdir ${thisPath}`;
                     exec(ipfsMkdirCmd, (error, stdout, stderr) => {
                         if (error) {
                             console.error(error);
@@ -1067,7 +1066,7 @@ if (import.meta.url === import.meta.url) {
         clusterLocation: "/ip4/167.99.96.231/tcp/9096/p2p/12D3KooWKw9XCkdfnf8CkAseryCgS3VVoGQ6HUAkY91Qc6Fvn4yv",
         secret: "96d5952479d0a2f9fbf55076e5ee04802f15ae5452b5faafc98e2bd48cf564d3",
     };
-    const ipfs_instance = new ipfs(null, meta);
-    const test_ipfs = await ipfs_instance.testIpfs();
-    console.log(test_ipfs);
+    // const ipfs_instance = new ipfs(null, meta);
+    // const test_ipfs = await ipfs_instance.testIpfs();
+    // console.log(test_ipfs);
 }

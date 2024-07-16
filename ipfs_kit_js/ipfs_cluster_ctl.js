@@ -3,8 +3,7 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 
-
-export class IpfsClusterCtl {
+export default class IpfsClusterCtl {
     constructor(resources, meta = null) {
         this.config = {};
         this.thisDir = path.dirname(import.meta.url);
@@ -340,22 +339,31 @@ export class IpfsClusterCtl {
 function test()
 {
     (async () => {
+        let detect = null;
+        let detectCmd = this.pathString + " which ipfs-cluster-ctl";
+        try{
+            detect = execSync(detectCmd).toString().trim();
+        }
+        catch(error){
+            detect = '';
+            console.error(error);
+        }
 
-        if (results) {
+        const thisIpfsClusterCtl = new IPFSClusterCtl();
+        const results = await thisIpfsClusterCtl.testIPFSClusterCtl();
+        console.log(results);
+        
+        if (detect !== '') {
             const status = thisIpfsClusterCtl.ipfsClusterCtlStatus();
             console.log(status);
         } else {
             console.log("ipfs-cluster-ctl is not installed.");
         }
 
-        const thisIpfsClusterCtl = new IPFSClusterCtl();
-        const results = await thisIpfsClusterCtl.testIPFSClusterCtl();
-        console.log(results);
-
     })();
 
 }
 
 if (import.meta.url === import.meta.url) {
-    test();
+    // test();
 }

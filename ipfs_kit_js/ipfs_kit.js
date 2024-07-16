@@ -4,6 +4,10 @@ import path from 'path';
 import os from 'os';
 import { promisify } from 'util';
 import Ipfs from './ipfs.js';
+import Ipget from './ipget.js';
+import IpfsClusterCtl from './ipfs_cluster_ctl.js';
+import IpfsClusterFollow from './ipfs_cluster_follow.js';
+import IpfsClusterService from './ipfs_cluster_service.js';
 
 const mkdir = promisify(fs.mkdir);
 const exists = promisify(fs.exists);
@@ -32,9 +36,8 @@ class IpfsKit {
             }
             if (Object.keys(meta).includes('role') && meta['role'] !== null && meta['role'] !== undefined) {
                 this.role = meta['role'];
-                if (!['master', 'worker', 'leecher'].includes(this.role)) {
-                    throw new Error('role is not either master, worker, leecher');
-                } else {
+                if (['master', 'worker', 'leecher'].includes(this.role) === false) {
+                    console.error('role is not either master, worker, leecher');
                     this.role = 'leecher';
                 }
             }

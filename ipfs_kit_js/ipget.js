@@ -3,7 +3,7 @@ import { exec } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 
-export class ipget {
+export default class ipget {
     constructor(resources, meta = null) {
         this.thisDir = path.dirname(import.meta.url);
         if (this.thisDir.startsWith("file://")) {
@@ -115,7 +115,7 @@ export class ipget {
 
 // create a test that runs only if the script is run directly, and it is an es Module without require
 if (import.meta.url === import.meta.url) {
-    const ipgetInstance = new ipget();
-    const testIpget = await ipgetInstance.testIpget();
-    console.log(testIpget);
+    // const ipgetInstance = new ipget();
+    // const testIpget = await ipgetInstance.testIpget();
+    // console.log(testIpget);
 }
