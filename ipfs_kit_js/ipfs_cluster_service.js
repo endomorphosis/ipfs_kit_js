@@ -113,8 +113,28 @@ export default class IpfsClusterService {
         }
         else{
             const command = "ps -ef | grep ipfs-cluster-service | grep daemon | grep -v grep | wc -l"
-            const results = execSync(command).toString();
+            const results = execSync(command).toString().trim();            
             return results;
+        }
+    }
+
+    async ipfsClusterServiceReady() {
+        let results =  await this.ipfsClusterServiceStatus();
+        if (os.userInfo().uid === 0) {
+            if (results.includes("active (running)")) {
+                return true;
+            }
+            else{
+                return false;
+            }
+        }
+        else{
+            if (parseInt(results) > 0) {
+                return true;
+            }
+            else{
+                return false;
+            }
         }
     }
 

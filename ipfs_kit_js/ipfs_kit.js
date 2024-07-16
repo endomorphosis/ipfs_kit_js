@@ -44,6 +44,9 @@ class IpfsKit {
             if (Object.keys(meta).includes('clusterName') && meta['clusterName'] !== null) {
                 this.clusterName = meta['clusterName'];
             }
+            else{
+                this.clusterName = 'cloudkit_storage';
+            }
             if (Object.keys(meta).includes('ipfsPath') && meta['ipfsath'] !== null) {
                 this.ipfsPath = meta['ipfsPath'];
             }
@@ -144,7 +147,7 @@ class IpfsKit {
         }
     }
 
-    ipfsKitReady(kwargs) {
+    ipfsKitReady(kwargs = {} ) {
         let clusterName = kwargs.clusterName || this.clusterName;
         if (!clusterName && this.role !== "leecher") {
             throw new Error("clusterName is not defined");
@@ -156,12 +159,12 @@ class IpfsKit {
 
         let psDaemonCmd  = "ps -ef | grep ipfs | grep daemon | grep -v grep | wc -l";
         let psDaemonCmdResults = execSync(psDaemonCmd).toString().trim();
-        if (parseInt(execute1) > 0) {
+        if (parseInt(psDaemonCmdResults) > 0) {
             ipfsReady = true;
         }
 
         if (this.role === "master") {
-            return this.ipfsClusterService.ipfsClusterServiceReady();
+            ipfsClusterReady =  this.ipfsClusterService.ipfsClusterServiceReady();
         } else if (this.role === "worker") {
             let dataIpfsFollow = this.ipfsClusterFollow.ipfsFollowInfo();
             if (dataIpfsFollow.cluster_peer_online === 'true' && dataIpfsFollow.ipfs_peer_online === 'true' && dataIpfsFollow.cluster_name === clusterName) {
@@ -172,7 +175,6 @@ class IpfsKit {
         if (this.role === "leecher" && ipfs_ready) {
             ready = true;
         } else if (this.role !== "leecher" && ipfsReady && ipfsClusterReady) {
-            this.ipfsFollowInfo = dataIpfsFollow;
             ready = true;
         } else {
             ready = {
@@ -180,6 +182,7 @@ class IpfsKit {
                 ipfsCluster: ipfsClusterReady
             };
         }
+
         return ready;
     }
 
