@@ -1,4 +1,4 @@
-import { execSync } from 'child_process';
+import { exec, execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
@@ -11,6 +11,7 @@ import IpfsClusterService from './ipfs_cluster_service.js';
 
 const mkdir = promisify(fs.mkdir);
 const exists = promisify(fs.exists);
+const execProm = promisify(exec);
 
 class IpfsKit {
     constructor(resources, meta = null) {
@@ -229,7 +230,7 @@ class IpfsKit {
     }
     
     async ipfsAddPin(pin, kwargs = {}) {
-        let dstPath = kwargs.path || this.ipfsPath;
+        let dstPath = this.localPath || kwargs.path;
         if (!await exists(dstPath)) {
             await mkdir(dstPath, { recursive: true });
         }
@@ -282,7 +283,9 @@ class IpfsKit {
         let ipfsLsPathResults = null
         try{
             ipfsLsPathResults = await this.ipfs.ipfsLsPath(path, kwargs);
-            ipfsLsPathResults = ipfsLsPathResults.filter(item => item !== "");    
+            if (ipfsLsPathResults !== null && typeof ipfsLsPathResults === 'object') {
+                ipfsLsPathResults = ipfsLsPathResults.filter(item => item !== "");   
+            }
         }
         catch(e){
             ipfsLsPathResults = e;
@@ -327,6 +330,7 @@ class IpfsKit {
         let ipfsRemovePathResults = null;
         if (this.role === "master") {
             ipfsClusterCtlRemovePathResults = await this.ipfsClusterCtl.ipfsClusterCtlRemovePath(path, kwargs);
+            // ipfsClusterCtlRemovePathResults = await this.ipfsClusterCtl.ipfsClusterCtlRemovePath(path, kwargs);
             ipfsRemovePathResults = await this.ipfs.ipfsRemovePath(path, kwargs);
         } else if (this.role === "worker" || this.role === "leecher") {
             ipfsRemovePathResults = await this.ipfs.ipfsRemovePath(path, kwargs);
@@ -388,7 +392,7 @@ class IpfsKit {
 
         try{
             if (this.role === "master") {
-                ipfsClusterPinsetResults = await ipfsClusterctl.ipfsClusterGetPinset();
+                ipfsClusterPinsetResults = await this.ipfsClusterCtl.ipfsClusterCtlGetPinset();
             } else if (this.role === "worker") {
                 ipfsClusterPinsetResults = await this.ipfsClusterFollow.ipfsFollowList();
             } else if (this.role === "leecher") {
@@ -413,7 +417,7 @@ class IpfsKit {
 
         if (this.role === "master") {
             try {
-                ipfsClusterService = await this.ipfsClusterService.ipfsClusterserviceStop();
+                ipfsClusterService = await this.ipfsClusterService.ipfsClusterServiceStop();
             } catch (e) {
                 ipfsClusterService = e;
                 console.error(e);
@@ -563,56 +567,6 @@ class IpfsKit {
         };
     }
     
-
-    async ipfsGetConfigBak() {
-        const command = "ipfs config show";
-        try {
-            const { stdout } = await execProm(command);
-            this.ipfs_config = JSON.parse(stdout);
-            return this.ipfs_config;
-        } catch (error) {
-            console.error("command failed", command, error);
-            throw error;
-        }
-    }
-
-    async ipfsSetConfigBak(newConfig) {
-        const filename = "/tmp/config_" + Date.now() + ".json";
-        await writeFileProm(filename, JSON.stringify(newConfig));
-        const command = "ipfs config replace " + filename;
-        try {
-            const { stdout } = await execProm(command);
-            this.ipfs_config = JSON.parse(stdout);
-            return this.ipfs_config;
-        } catch (error) {
-            console.error("command failed", command, error);
-            throw error;
-        }
-    }
-
-    async ipfsGetConfigValueBak(key) {
-        const command = `ipfs config ${key}`;
-        try {
-            const { stdout } = await execProm(command);
-            return JSON.parse(stdout);
-        } catch (error) {
-            console.error("command failed", command, error);
-            throw new Error("command failed");
-        }
-    }
-
-    async ipfsSetConfigValueBak(key, value) {
-        const command = `ipfs config ${key} ${value}`;
-        try {
-            const { stdout } = await execProm(command);
-            return JSON.parse(stdout);
-        } catch (error) {
-            console.error("command failed", command, error);
-            throw new Error("command failed");
-        }
-    }
-
-
     async checkCollection(collection) {
         let status = {
             orphanModels: [],
@@ -658,15 +612,19 @@ class IpfsKit {
 
         return status;
     }
-    async ipfsUploadObject({ file }) {
+    async ipfsUploadObject(file) {
+        if (!file) {
+            throw new Error("file is not defined");
+        }
+
         let thisFile = file;
         let thisFileBasename = path.basename(thisFile);
         let thisFileDirname = path.dirname(thisFile);
         let thisFileStat = fs.statSync(thisFile);
         let ipfsUploadObjectResults = null;
         try {
-            this.ipfs.add(thisFile, { recursive: true });
-            ipfsUploadObjectResults = this.ipfs.namePublish(thisFile);
+            thisFileStat = this.ipfs.ipfsAddPath(thisFile);
+            ipfsUploadObjectResults = this.ipfs.ipfsNamePublish(thisFile);
         }
         catch (e) {
             ipfsUploadObjectResults = e;
@@ -674,7 +632,8 @@ class IpfsKit {
         }
 
         return {
-            ipfsUploadObject: ipfsUploadObjectResults
+            ipfsUploadObject: ipfsUploadObjectResults,
+            fileStat: thisFileStat,
         };
     }
 
@@ -682,12 +641,12 @@ class IpfsKit {
         return this.uploadObject(file);
     }
 
-    async ipgetDownloadObject(kwargs) {
-        let thisCid = kwargs.cid;
-        let thisPath = kwargs.path;
+    async ipgetDownloadObject(thisCid, thisPath, kwargs = {}) {
+        let cid = thisCid || kwargs.cid;
+        let dstPath = thisPath || kwargs.path;
         let ipgetDownloadObjectResults = null;
         try {
-            ipgetDownloadObjectResults = this.ipget.ipgetDownloadObject(thisCid, thisPath);
+            ipgetDownloadObjectResults = this.ipget.ipgetDownloadObject(cid, dstPath, kwargs);
         } catch (e) {
             ipgetDownloadObjectResults = e;
             console.error(e);
@@ -704,6 +663,15 @@ class IpfsKit {
     }
 
     async updateCollectionIpfs(collection, collectionPath) {
+
+        if (!collection) {
+            throw new Error("collection is not defined");
+        }
+
+        if (!collectionPath) {
+            throw new Error("collectionPath is not defined");
+        }
+
         let thisCollectionIpfs = null;
         let ipfsAddPathRecursiveCmd = `ipfs add -r ${collectionPath}`;
 
@@ -755,6 +723,13 @@ class IpfsKit {
         let test_ipfs_upload_object = null;
         let test_load_collection = null;
 
+        let testCidDownload =  "QmccfbkWLYs9K3yucc6b3eSt8s8fKcyRRt24e3CDaeRhM1";
+        testCidDownload = 'bafybeifx7yeb55armcsxwwitkymga5xf53dxiarykms3ygqic223w5sk3m'
+        testCidDownload = 'QmSgvgwxZGaBLqkGyWemEDqikCqU52XxsYLKtdy3vGZ8uq'
+
+        let testDownloadPath = "/tmp/test";
+        let thisScriptName = path.join(this.thisDir, path.basename(import.meta.url));
+
         try {
             test_ipfs_kit_start = await this.ipfsKitStart();
         } catch (e) {
@@ -766,13 +741,6 @@ class IpfsKit {
             test_ipfs_kit_ready = await this.ipfsKitReady();
         } catch (e) {
             test_ipfs_kit_ready = e;
-            console.error(e);
-        }
-
-        try {
-            test_load_collection = await this.loadCollection();
-        } catch (e) {
-            test_load_collection = e;
             console.error(e);
         }
 
@@ -824,16 +792,16 @@ class IpfsKit {
             console.error(e);
         }
 
-        try {
-            test_update_collection_ipfs = await this.updateCollectionIpfs();
-        }
-        catch (e) {
-            test_update_collection_ipfs = e;
-            console.error(e);
-        }
+        // try {
+        //     test_update_collection_ipfs = await this.updateCollectionIpfs();
+        // }
+        // catch (e) {
+        //     test_update_collection_ipfs = e;
+        //     console.error(e);
+        // }
 
         try {
-            test_ipfs_add_path = await this.ipfsAddPath();
+            test_ipfs_add_path = await this.ipfsAddPath(thisScriptName);
         }
         catch (e) {
             test_ipfs_add_path = e;
@@ -841,7 +809,7 @@ class IpfsKit {
         }
 
         try {
-            test_ipfs_remove_path = await this.ipfsRemovePath();
+            test_ipfs_remove_path = await this.ipfsRemovePath(thisScriptName);
         }
         catch (e) {
             test_ipfs_remove_path = e;
@@ -849,7 +817,7 @@ class IpfsKit {
         }
 
         try {
-            test_ipfs_ls_path = await this.ipfsLsPath();
+            test_ipfs_ls_path = await this.ipfsLsPath(thisScriptName);
         }
         catch (e) {
             test_ipfs_ls_path = e;
@@ -864,28 +832,28 @@ class IpfsKit {
         }
 
         try {
-            test_ipfs_add_pin = await this.ipfsAddPin
+            test_ipfs_add_pin = await this.ipfsAddPin(testCidDownload);
         } catch (e) {
             test_ipfs_add_pin = e;
             console.error(e);
         }
 
         try {
-            test_ipfs_remove_pin = await this.ipfsRemovePin();
+            test_ipfs_remove_pin = await this.ipfsRemovePin(testCidDownload);
         } catch (e) {
             test_ipfs_remove_pin = e;
             console.error(e);
         }
 
         try {
-            test_ipget_download_object = await this.ipgetDownloadObject();
+            test_ipget_download_object = await this.ipgetDownloadObject(testCidDownload, testDownloadPath);
         } catch (e) {
             test_ipget_download_object = e;
             console.error(e);
         }
 
         try {
-            test_ipfs_upload_object = await this.ipfsUploadObject();
+            test_ipfs_upload_object = await this.ipfsUploadObject(thisScriptName);
         }
         catch (e) {
             test_ipfs_upload_object = e;
@@ -907,7 +875,6 @@ class IpfsKit {
             test_ipfs_get_pinset: test_ipfs_get_pinset,
             test_ipfs_add_pin: test_ipfs_add_pin,
             test_ipfs_remove_pin: test_ipfs_remove_pin,
-            test_ipfs_get: test_ipfs_get,
             test_ipget_download_object: test_ipget_download_object,
             test_ipfs_upload_object: test_ipfs_upload_object,
             test_load_collection: test_load_collection

@@ -93,11 +93,11 @@ export default class IpfsClusterService {
         let ipfsClusterServiceResults = null;
         if (os.userInfo().uid === 0) {
             ipfsClusterServiceCmd = this.pathString + " systemctl stop ipfs-cluster-service";
-            ipfsClusterServiceResults = execSync(command).toString();
+            ipfsClusterServiceResults = execSync(ipfsClusterServiceCmd).toString();
         }
         else{
             ipfsClusterServiceCmd = "ps -ef | grep ipfs-cluster-service | grep -v grep | awk '{print $2}' | xargs kill -9"
-            ipfsClusterServiceResults = execSync(command).toString();
+            ipfsClusterServiceResults = execSync(ipfsClusterServiceCmd).toString();
         }
 
         return {

@@ -1,9 +1,13 @@
 import { exec, execSync } from 'child_process';
 import fs from 'fs';
-import os from 'os';
+import os, { type } from 'os';
 import path from 'path';
 import { start } from 'repl';
 import { InstallIpfs } from './install_ipfs.js';
+import util from 'util';
+
+const execProm = util.promisify(exec);
+const writeFileProm = util.promisify(fs.writeFile);
 
 export default class ipfs {
     constructor(resources, meta) {
@@ -234,10 +238,9 @@ export default class ipfs {
             }
         }
 
-        // Run this if user is not root or root user fails check if it passes
+        let psDaemonCmdResults = null;
         if (os.userInfo().uid !== 0 || ipfsReady === false) {
             try {
-                let psDaemonCmdResults = null;
                 let psDaemonCmd = "ps -ef | grep ipfs | grep daemon | grep -v grep | awk '{print $2}'";
                 exec(psDaemonCmd, (error, stdout, stderr) => {
                     if (error) {
@@ -393,8 +396,8 @@ export default class ipfs {
     async ipfsGetPinset(kwargs = {}) {
         const thisTempFile = path.join(os.tmpdir(), 'temp.txt');
         const ipfsGetPinsetCmd = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs pin ls -s > ${thisTempFile}`;
-        await new ipfsGetPinsetCmd((resolve, reject) => {
-            exec(command, (error, stdout, stderr) => {
+        await new Promise((resolve, reject) => {
+            exec(ipfsGetPinsetCmd, (error, stdout, stderr) => {
                 if (error) {
                     reject(error.message);
                 } else {
@@ -475,6 +478,72 @@ export default class ipfs {
                 }
             }
         })
+    }
+
+    async ipfsGetConfig() {
+        const command = this.pathString + ` IPFS_PATH=${this.ipfsPath}` + " ipfs config show";
+        try {
+            const { stdout } = await execProm(command);
+            this.ipfs_config = JSON.parse(stdout);
+            return this.ipfs_config;
+        } catch (error) {
+            console.error("command failed", command, error);
+            throw error;
+        }
+    }
+
+    async ipfsSetConfig(newConfig) {
+
+        if (newConfig == undefined) {
+            throw new Error("newConfig not found");
+        }
+
+        const filename = "/tmp/config_" + Date.now() + ".json";
+        await writeFileProm(filename, JSON.stringify(newConfig));
+        const command = this.pathString + ` IPFS_PATH=${this.ipfsPath}` + " ipfs config replace " + filename;
+        try {
+            const { stdout } = await execProm(command);
+            this.ipfs_config = JSON.parse(stdout);
+            return this.ipfs_config;
+        } catch (error) {
+            console.error("command failed", command, error);
+            throw error;
+        }
+    }
+
+    async ipfsGetConfigValue(key) {
+
+        if (key == undefined) {
+            throw new Error("key not found");
+        }
+
+        const command = this.pathString + ` IPFS_PATH=${this.ipfsPath}` + `ipfs config ${key}`;
+        try {
+            const { stdout } = await execProm(command);
+            return JSON.parse(stdout);
+        } catch (error) {
+            console.error("command failed", command, error);
+            throw new Error("command failed");
+        }
+    }
+
+    async ipfsSetConfigValue(key, value) {
+
+        if (key == undefined) {
+            throw new Error("key not found");
+        }
+        if (value == undefined) {
+            throw new Error("value not found");
+        }
+
+        const command = this.pathString + ` IPFS_PATH=${this.ipfsPath}` + `ipfs config ${key} ${value}`;
+        try {
+            const { stdout } = await execProm(command);
+            return JSON.parse(stdout);
+        } catch (error) {
+            console.error("command failed", command, error);
+            throw new Error("command failed");
+        }
     }
 
     async ipfsAddPath(srcPath, kwargs = {}) {
@@ -650,6 +719,14 @@ export default class ipfs {
 
 
     async ipfsNameResolve(srcPath, kwargs = {}) {
+        if (typeof srcPath !== 'string') {
+            throw new Error("srcPath must be a string");
+        }
+        
+        if (!fs.existsSync(srcPath)) {
+            throw new Error("path not found");
+        }
+
         let ipfsNameResolveResults = null;
         let ipfsNamePublishCmd = "";
         try {

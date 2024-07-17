@@ -46,6 +46,29 @@ export default class IpfsClusterCtl {
         return fileList;
     }
 
+
+    async ipfsClusterCtlAddPath(dirPath, metadata = {}) {
+        if (!fs.existsSync(dirPath)) {
+            throw new Error("Path not found");
+        }
+        
+        const files = this.walkSync(dirPath);
+        const results = files.map(file => {
+            const relativePath = path.relative(dirPath, file);
+            let argString = metadata[relativePath] ? ` --metadata ${metadata[relativePath]}` : "";
+            let command = this.pathString + ` ipfs-cluster-ctl pin add ${file}${argString}`;
+            try {
+                const output = execSync(command).toString();
+                return output;
+            } catch (error) {
+                console.error(`Failed to execute command for file ${file}: ${error}`);
+                return null;
+            }
+        });
+
+        return results.filter(result => result !== null);
+    }
+
     async ipfsClusterCtlAddPin(dirPath, metadata = {}) {
         if (!fs.existsSync(dirPath)) {
             throw new Error("Path not found");
@@ -68,9 +91,31 @@ export default class IpfsClusterCtl {
         return results.filter(result => result !== null);
     }
 
+    async ipfsClusterCtlRemovePath(dirPath) {
+        if (!dirPath) {
+            throw new Error("Path not found");
+        }
+
+        const files = this.walkSync(dirPath);
+        const results = files.map(file => {
+            let command = this.pathString + ` ipfs-cluster-ctl pin rm ${file}`;
+            try {
+                const output = execSync(command).toString();
+                return `Unpinned: ${file}`;
+            } catch (error) {
+                console.error(`Failed to execute command for file ${file}: ${error}`);
+                return `Failed to unpin: ${file}`;
+            }
+        });
+
+        return results;
+    }
 
     async ipfsClusterCtlRemovePin(dirPath) {
-        if (!fs.existsSync(dirPath)) {
+
+        throw new Error("Method not implemented.");
+
+        if (!dirPath) {
             throw new Error("Path not found");
         }
 
@@ -180,7 +225,7 @@ export default class IpfsClusterCtl {
     }
 
 
-    async getPinset() {
+    async ipfsClusterCtlGetPinset() {
         // Create a temporary file path
         const tempFile = path.join(os.tmpdir(), `pinset-${Date.now()}.txt`);
         try {

@@ -45,12 +45,12 @@ export default class ipget {
     }
 
 
-    async ipgetDownloadObject(kwargs = {}) {
+    async ipgetDownloadObject(cid, dstPath, kwargs = {}) {
         // NOTE: Make sure this function can download both files and folders 
-        if (!kwargs.cid) {
+        if (!kwargs.cid && !cid) {
             throw new Error("cid not found in kwargs");
         }
-        if (!kwargs.path) {
+        if (!kwargs.path, !dstPath) {
             throw new Error("path not found in kwargs");
         }
         if (fs.existsSync(kwargs.path)) {
