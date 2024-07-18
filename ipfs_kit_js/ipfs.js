@@ -457,19 +457,23 @@ export default class ipfs {
             for (let i = 0; i < thisPathSplit.length; i++) {
                 try{
                     thisPath += thisPathSplit[i] + "/";
-                    const ipfsMkdirCmd = `export IPFS_PATH=${this.ipfsPath} &&  ` + this.pathString + ` ipfs files mkdir ${thisPath}`;
-                    exec(ipfsMkdirCmd, (error, stdout, stderr) => {
-                        if (error) {
-                            console.error(error);
-                            reject(error.message);
-                        }
-                        if (stderr) {
-                            console.error(stderr);
-                            reject(stderr);
-                        }
-                        if(stdout){
-                            ipfsMkdirResults.push(stdout);
-                            resolve(stdout);
+                    const lsPath = this.ipfsLsPath(thisPath, kwargs).then((lsResults) => {
+                        if(lsResults == false){
+                            const ipfsMkdirCmd = `export IPFS_PATH=${this.ipfsPath} &&  ` + this.pathString + ` ipfs files mkdir ${thisPath}`;
+                            exec(ipfsMkdirCmd, (error, stdout, stderr) => {
+                                if (error) {
+                                    console.error(error);
+                                    reject(error.message);
+                                }
+                                if (stderr) {
+                                    console.error(stderr);
+                                    reject(stderr);
+                                }
+                                if(stdout){
+                                    ipfsMkdirResults.push(stdout);
+                                    resolve(stdout);
+                                }
+                            });
                         }
                     });
                 }
@@ -497,10 +501,10 @@ export default class ipfs {
         if (newConfig == undefined) {
             throw new Error("newConfig not found");
         }
-
-        const filename = "/tmp/config_" + Date.now() + ".json";
-        await writeFileProm(filename, JSON.stringify(newConfig));
-        const command = this.pathString + ` IPFS_PATH=${this.ipfsPath}` + " ipfs config replace " + filename;
+        if (!fs.existsSync(newConfig)) {
+            throw new Error("ipfsPath not found");
+        }
+        const command = this.pathString + ` IPFS_PATH=${this.ipfsPath}` + " ipfs config replace " + newConfig;
         try {
             const { stdout } = await execProm(command);
             this.ipfs_config = JSON.parse(stdout);
@@ -517,10 +521,10 @@ export default class ipfs {
             throw new Error("key not found");
         }
 
-        const command = this.pathString + ` IPFS_PATH=${this.ipfsPath}` + `ipfs config ${key}`;
+        const command = this.pathString + ` IPFS_PATH=${this.ipfsPath}` + ` ipfs config ${key}`;
         try {
-            const { stdout } = await execProm(command);
-            return JSON.parse(stdout);
+            const stdout = await execProm(command);
+            return stdout;
         } catch (error) {
             console.error("command failed", command, error);
             throw new Error("command failed");
@@ -536,10 +540,10 @@ export default class ipfs {
             throw new Error("value not found");
         }
 
-        const command = this.pathString + ` IPFS_PATH=${this.ipfsPath}` + `ipfs config ${key} ${value}`;
+        const command = this.pathString + ` IPFS_PATH=${this.ipfsPath}` + ` ipfs config ${key} ${value}`;
         try {
-            const { stdout } = await execProm(command);
-            return JSON.parse(stdout);
+            const stdout  = await execProm(command);
+            return stdout;
         } catch (error) {
             console.error("command failed", command, error);
             throw new Error("command failed");
@@ -722,10 +726,7 @@ export default class ipfs {
         if (typeof srcPath !== 'string') {
             throw new Error("srcPath must be a string");
         }
-        
-        if (!fs.existsSync(srcPath)) {
-            throw new Error("path not found");
-        }
+
 
         let ipfsNameResolveResults = null;
         let ipfsNamePublishCmd = "";
@@ -753,10 +754,7 @@ export default class ipfs {
         return ipfsNamePublishCmd;
     }
 
-    async ipfsNamePublish(srcPath, kwargs = {}) {
-        if (!fs.existsSync(srcPath)) {
-            throw new Error("path not found");
-        }
+    async ipfsNamePublish(srcIPNS, kwargs = {}) {
         let ipfsNamePublishResults = null;
         let ipfsNamePublishCmd = "";
         let ipfsAddPinCmd = "";
@@ -827,7 +825,7 @@ export default class ipfs {
         try {
             ipfsLsPathCmd = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs files ls ${srcPath}`;
             await new Promise((resolve, reject) => {
-                exec(stat1, (error, stdout, stderr) => {
+                exec(ipfsLsPathCmd, (error, stdout, stderr) => {
                     if (error) {
                         ipfsLsPathResults = error.message;
                         reject(error.message);

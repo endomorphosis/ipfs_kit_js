@@ -45,7 +45,9 @@ export default class ipget {
     }
 
 
-    async ipgetDownloadObject(cid, dstPath, kwargs = {}) {
+    async ipgetDownloadObject(thisCid, thisPath, kwargs = {}) {
+        let cid = thisCid || kwargs.cid;
+        let dstPath = thisPath || kwargs.path;
         // NOTE: Make sure this function can download both files and folders 
         if (!kwargs.cid && !cid) {
             throw new Error("cid not found in kwargs");
@@ -53,18 +55,18 @@ export default class ipget {
         if (!kwargs.path, !dstPath) {
             throw new Error("path not found in kwargs");
         }
-        if (fs.existsSync(kwargs.path)) {
+        if (fs.existsSync(dstPath)) {
             // pass
         }
         //check if folder exists
-        if (!fs.existsSync(path.dirname(kwargs.path))) {
-            fs.mkdirSync(path.dirname(kwargs.path), { recursive: true });
+        if (!fs.existsSync(path.dirname(dstPath))) {
+            fs.mkdirSync(path.dirname(dstPath), { recursive: true });
         }
-        if (!fs.existsSync(kwargs.path)) {
-            fs.mkdirSync(kwargs.path);
+        if (!fs.existsSync(dstPath)) {
+            fs.mkdirSync(dstPath);
         }
         
-        const command = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs get ${kwargs.cid} -o ${kwargs.path}`;
+        const command = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs get ${cid} -o ${dstPath}`;
         const process = exec(command);
 
         const start_time = Date.now();
@@ -75,10 +77,10 @@ export default class ipget {
                 if (signal) {
                     reject(new Error("Command timed out"));
                 } else {
-                    const stats = fs.statSync(kwargs.path);
+                    const stats = fs.statSync(dstPath);
                     const metadata = {
-                        "cid": kwargs.cid,
-                        "path": kwargs.path,
+                        "cid": cid,
+                        "path": dstPath,
                         "mtime": stats.mtimeMs,
                         "filesize": stats.size
                     };

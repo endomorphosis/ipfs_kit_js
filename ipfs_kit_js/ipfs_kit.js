@@ -297,10 +297,10 @@ class IpfsKit {
         };
     }
 
-    async nameResolve(kwargs = {}) {
+    async nameResolve(srcIPNS, kwargs = {}) {
         let ipfsNameResolveResults = null;
         try{
-            ipfsNameResolveResults = await this.ipfs.ipfsNameResolve(kwargs);
+            ipfsNameResolveResults = await this.ipfs.ipfsNameResolve(srcIPNS, kwargs);
         }
         catch(e){
             ipfsNameResolveResults = e;
@@ -311,10 +311,10 @@ class IpfsKit {
         };
     }
 
-    async namePublish(path, kwargs = {}) {
+    async namePublish(cid, kwargs = {}) {
         let ipfsNamePublishResults = null;
         try{
-            ipfsNamePublishResults = await this.ipfs.ipfsNamePublish(path, kwargs);
+            ipfsNamePublishResults = await this.ipfs.ipfsNamePublish(cid, kwargs);
         }
         catch(e){
             ipfsNamePublishResults = e;
@@ -724,11 +724,15 @@ class IpfsKit {
         let test_load_collection = null;
 
         let testCidDownload =  "QmccfbkWLYs9K3yucc6b3eSt8s8fKcyRRt24e3CDaeRhM1";
-        testCidDownload = 'bafybeifx7yeb55armcsxwwitkymga5xf53dxiarykms3ygqic223w5sk3m'
         testCidDownload = 'QmSgvgwxZGaBLqkGyWemEDqikCqU52XxsYLKtdy3vGZ8uq'
+
+        let testIPNS = '/ipns/docs.ipfs.tech/introduction/'
+
 
         let testDownloadPath = "/tmp/test";
         let thisScriptName = path.join(this.thisDir, path.basename(import.meta.url));
+        let thisScriptFolderName = path.dirname(thisScriptName);
+        let thisConfig = path.join(thisScriptFolderName, "config");
 
         try {
             test_ipfs_kit_start = await this.ipfsKitStart();
@@ -753,7 +757,7 @@ class IpfsKit {
         }
 
         try{
-            test_ipfs_set_config = await this.ipfsSetConfig();
+            test_ipfs_set_config = await this.ipfsSetConfig(thisConfig);
         }
         catch(e){
             test_ipfs_set_config = e;
@@ -761,15 +765,7 @@ class IpfsKit {
         }
 
         try{
-            test_ipfs_name_resolve = await this.nameResolve();
-        }
-        catch(e){
-            test_ipfs_name_resolve = e;
-            console.error(e);
-        }
-
-        try{
-            test_ipfs_name_publish = await this.namePublish();
+            test_ipfs_name_publish = await this.namePublish(thisScriptName);
         }
         catch(e){
             test_ipfs_name_publish = e;
@@ -777,18 +773,26 @@ class IpfsKit {
         }
 
         try{
-            test_ipfs_get_config_value = await this.ipfsGetConfigValue();
+            test_ipfs_name_resolve = await this.nameResolve(testIPNS);
         }
         catch(e){
-            test_ipfs_get_config_value = e;
+            test_ipfs_name_resolve = e;
             console.error(e);
         }
 
         try{
-            test_ipfs_set_config_value = await this.ipfsSetConfigValue();
+            test_ipfs_set_config_value = await this.ipfsSetConfigValue('foo', 'bar');
         }
         catch(e){
             test_ipfs_set_config_value = e;
+            console.error(e);
+        }
+
+        try{
+            test_ipfs_get_config_value = await this.ipfsGetConfigValue('foo');
+        }
+        catch(e){
+            test_ipfs_get_config_value = e;
             console.error(e);
         }
 
@@ -895,7 +899,7 @@ if (import.meta.url === import.meta.url) {
         secret: "96d5952479d0a2f9fbf55076e5ee04802f15ae5452b5faafc98e2bd48cf564d3",
     };
     const ipfs_kit_instance = new IpfsKit(null, meta);
-    const test_ipfs = await ipfs_kit_instance.testIpfsKit();
+    // const test_ipfs = await ipfs_kit_instance.testIpfsKit();
     console.log(test_ipfs);
 }
 

@@ -70,7 +70,8 @@ export default class IpfsClusterService {
             return results;
         }
         else{
-            const command = this.pathString + ` IPFS_CLUSTER_PATH=${this.ipfsPath} ipfs-cluster-service daemon --bootstrap /ip4/167.99.96.231/tcp/9096/p2p/12D3KooWDYKMnVLKnP2SmM8umJEEKdhug93QYybmNUEiSe1Kwjmu`
+            // const command = this.pathString + ` IPFS_CLUSTER_PATH=${this.ipfsPath} ipfs-cluster-service daemon --bootstrap /ip4/167.99.96.231/tcp/9096/p2p/12D3KooWDYKMnVLKnP2SmM8umJEEKdhug93QYybmNUEiSe1Kwjmu`
+            const command = this.pathString + ` IPFS_CLUSTER_PATH=${this.ipfsPath} ipfs-cluster-service daemon `
             const results = exec(command, (error, stdout, stderr) => {
                 if (error) {
                     console.error(`error: ${error.message}`);
