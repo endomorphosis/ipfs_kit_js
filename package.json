@@ -583,6 +583,9 @@
     "yargs-parser": "^21.1.1",
     "yocto-queue": "^0.1.0"
   },
+  "scripts": {
+    "test": " node tests/test.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/endomorphosis/ipfs_kit_js.git"
