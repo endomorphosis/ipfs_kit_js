@@ -17,7 +17,6 @@
 		"crypto": "^1.0.1",
 		"deasync": "^0.1.29",
 		"debug": "^4.3.4",
-		"helia": "^4.1.0",
 		"ipfs-cluster-api": "^0.0.9",
 		"ipfs-http-client": "^60.0.1",
 		"is-stream": "^3.0.0",
