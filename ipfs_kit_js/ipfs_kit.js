@@ -13,7 +13,7 @@ const mkdir = promisify(fs.mkdir);
 const exists = promisify(fs.exists);
 const execProm = promisify(exec);
 
-class IpfsKit {
+export class ipfs_kit_js {
     constructor(resources, meta = null) {
         this.thisDir = path.dirname(import.meta.url);
         if (this.thisDir.startsWith("file://")) {
