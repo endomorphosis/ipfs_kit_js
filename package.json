@@ -1,9 +1,9 @@
 {
   "name": "ipfs_kit_js",
-  "version": "1.0.7",
+  "version": "1.0.14",
   "description": "This is a nodejs library that installs and configures ipfs services through Kubo, ipfs_cluster_service based on the contents in the config file, for example whether the node is supposed to operate as a master, worker, or leecher.",
-  "main": "ipfs_kit_js/ipfs_kit.js",
   "type": "module",
+  "main": "index.js",
   "dependencies": {
     "abort-controller": "^3.0.0",
     "abortable-iterator": "^5.0.1",

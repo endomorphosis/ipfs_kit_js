@@ -3,7 +3,7 @@ import fs from 'fs';
 import os, { type } from 'os';
 import path from 'path';
 import { start } from 'repl';
-import { InstallIpfs } from './install_ipfs.js';
+import { installIpfs } from './install_ipfs.js';
 import util from 'util';
 
 const execProm = util.promisify(exec);

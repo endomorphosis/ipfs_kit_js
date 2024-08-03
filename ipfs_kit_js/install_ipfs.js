@@ -18,7 +18,7 @@ import { time } from 'console';
 // TODO: This fails if aria2c is not installed but doesn't fail gracefully and in a way that diagnoses the problem to the user 
 //       Either add a check for aria2c and report to user or add aria2c to the install that is ran before hand
 
-export class InstallIpfs {
+export class installIpfs {
     constructor(resources, meta = null) {
         this.resources = resources;
         this.meta = meta;
