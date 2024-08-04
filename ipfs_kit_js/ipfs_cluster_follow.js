@@ -218,8 +218,7 @@ export default class IpfsClusterFollow {
                 };
             }
         } catch (error) {
-            console.error(`Error executing ipfs-cluster-follow info: ${error.message}`);
-            if (error.message.includes("500")){
+            if (error.stdout.includes("This cluster peer has not been initialized.")){
                 let InstallIpfs = new install_ipfs.InstallIpfs(undefined, { role: 'leecher', clusterName: clusterName, ipfs_path: this.ipfsPath });
                 let installResults = InstallIpfs.installIPFSClusterFollow();
                 let configResults = InstallIpfs.configIPFSClusterFollow();
@@ -227,6 +226,9 @@ export default class IpfsClusterFollow {
                 console.log(`Configure IPFS Cluster Follow results: ${configResults}`);
                 console.log(`Attempting to run ipfs-cluster-follow info again`);
                 execSync(command, { encoding: 'utf8' });
+            }
+            else{
+                console.error(`Error executing ipfs-cluster-follow info: ${error.stdout}`);
             }
         }
 
