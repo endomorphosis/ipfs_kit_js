@@ -122,12 +122,22 @@ export default class IpfsClusterFollow {
         if (os.userInfo().uid != 0 || results.systemctl.includes('Error')){
             try {
                 // Forcefully kill the ipfs-cluster-follow process if it's still running
-                const listCommand = "ps -ef | grep ipfs-cluster-follow | grep -v grep | wc -l";
-                const listResults = execSync(listCommand).toString().trim();
-                if (parseInt(listResults) > 0) {              
-                    const killCommand = "ps -ef | grep ipfs-cluster-follow | grep -v grep | awk '{print $2}' | xargs kill -9";
-                    const killResults = execSync(killCommand).toString();
-                    results.bash = killResults;
+                let listCommand = "ps -ef | grep ipfs-cluster-follow | grep -v grep | wc -l";
+                let listResults = execSync(listCommand).toString().trim();
+                if (parseInt(listResults) > 0) {
+                    listCommand = "ps -ef | grep ipfs-cluster-follow | grep -v grep | grep -v root | awk '{print $2}'";
+                    listResults = execSync(listCommand).toString().trim();
+                    if (parseInt(listResults) > 0) {            
+                        const killCommand = "ps -ef | grep ipfs-cluster-follow | grep -v grep | grep -v root | awk '{print $2}' | xargs kill -9";
+                        const killResults = execSync(killCommand).toString();
+                        results.bash = killResults;    
+                    }
+                    listCommand = "ps -ef | grep ipfs-cluster-follow | grep -v grep | grep -v root | awk '{print $2}'";
+                    listResults = execSync(listCommand).toString().trim();
+                    if (parseInt(listResults) > 0) {
+                        results.bash = "ipfs-cluster-follow process found but not killed because it's running as root";
+                        console.log ("ipfs-cluster-follow process found but not killed because it's running as root");
+                    }
                 }
                 else{
                     results.bash = "No ipfs-cluster-follow process found to kill";
