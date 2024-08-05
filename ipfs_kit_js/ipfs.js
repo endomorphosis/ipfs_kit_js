@@ -133,60 +133,89 @@ export default class ipfs {
 
         // Run this if user is not root or root user fails check if it passes
         if (os.userInfo().uid !== 0 || ipfsReady === false) {
+            const psCommand = "ps -ef | grep ipfs | grep daemon | grep -v grep | wc -l";
+            const psRootCommand = "ps -ef | grep ipfs | grep daemon | grep -v grep | grep root | wc -l";
+            let psDaemonCmdResults = null;
             try {
-                const startDaemonCmd = `export IPFS_PATH=${path.resolve(path.join(this.ipfsPath))} &&  ` + this.pathString   + ` ipfs daemon --enable-gc --enable-pubsub-experiment`;
-                //const execute2 = execSync(command2);
-                const executeStartDaemonCmd = exec(startDaemonCmd, (error, stdout, stderr) => {
-                    if (error) {
-                        console.error(error);
-                        startDaemonCmdResults = error.message;
+                psDaemonCmdResults = execSync(psCommand).toString().trim();
+                if (parseInt(psDaemonCmdResults) > 0) {
+                    let psRootDaemonCmdResults = execSync(psRootCommand).toString().trim();
+                    if (psDaemonCmdResults > psRootDaemonCmdResults && psDaemonCmdResults > 0) {
+                        await this.daemonStop();
+                        ipfsReady = false;
                     }
-                    if (stdout) {
-                        startDaemonCmdResults = stdout;
-                    }
-                    if (stderr) {
-                        console.error(stderr);
-                        startDaemonCmdResults = stderr;
-                    }
-                });
-                // add a sleep here to wait for the daemon to start
-                let milliseconds = 2000;
-                let start = new Date().getTime();
-                while (startDaemonCmdResults == false) {
-                    if ((new Date().getTime() - start) > milliseconds) {
-                        break;
+                    else if (psDaemonCmdResults == psRootDaemonCmdResults && psRootDaemonCmdResults > 0) {
+                        console.log("Daemon already running as root, not starting daemon");
+                        ipfsReady = true;
                     }
                 }
-
-                return new Promise((resolve, reject) => {
-                    const checkDaemonCmd = "ps -ef | grep ipfs | grep daemon | grep -v grep | wc -l";
-                    exec(checkDaemonCmd, (error, stdout, stderr) => {
-                        let len_stdout = parseInt(stdout.trim());
-                        if (!error && len_stdout > 0) {
-                            ipfsReady = true;
-                        }
+            }
+            catch (error) {
+                psDaemonCmdResults = error;
+            }            
+            if (ipfsReady === false) {
+                try {
+                    const startDaemonCmd = `export IPFS_PATH=${path.resolve(path.join(this.ipfsPath))} &&  ` + this.pathString   + ` ipfs daemon --enable-gc --enable-pubsub-experiment`;
+                    //const execute2 = execSync(command2);
+                    const executeStartDaemonCmd = exec(startDaemonCmd, (error, stdout, stderr) => {
                         if (error) {
                             console.error(error);
-                            ipfsReady = false;
+                            startDaemonCmdResults = error.message;
+                        }
+                        if (stdout) {
+                            startDaemonCmdResults = stdout;
                         }
                         if (stderr) {
                             console.error(stderr);
-                            ipfsReady = false;
+                            startDaemonCmdResults = stderr;
                         }
-                        const results = {
-                            "systemctl": startDaemonSystemCtlResults,
-                            "bash": startDaemonCmdResults,
-                            "ipfsReady": ipfsReady,
-                        };
-                        resolve(results);
                     });
-                });
-            } catch (error) {
-                console.log(`Error starting ipfs: ${error}`);
-                startDaemonCmdResults = error;
+                    // add a sleep here to wait for the daemon to start
+                    let milliseconds = 2000;
+                    let start = new Date().getTime();
+                    while (startDaemonCmdResults == false) {
+                        if ((new Date().getTime() - start) > milliseconds) {
+                            break;
+                        }
+                    }
+
+                    return new Promise((resolve, reject) => {
+                        const checkDaemonCmd = "ps -ef | grep ipfs | grep daemon | grep -v grep | wc -l";
+                        exec(checkDaemonCmd, (error, stdout, stderr) => {
+                            let len_stdout = parseInt(stdout.trim());
+                            if (!error && len_stdout > 0) {
+                                ipfsReady = true;
+                            }
+                            if (error) {
+                                console.error(error);
+                                ipfsReady = false;
+                            }
+                            if (stderr) {
+                                console.error(stderr);
+                                ipfsReady = false;
+                            }
+                            const results = {
+                                "systemctl": startDaemonSystemCtlResults,
+                                "bash": startDaemonCmdResults,
+                                "ipfsReady": ipfsReady,
+                            };
+                            resolve(results);
+                        });
+                    });
+                } catch (error) {
+                    console.error(error);
+                    startDaemonCmdResults = error;
+                }
+            }
+            else if (ipfsReady === true) {
+                console.log("IPFS Daemon already running");
+                return {
+                    "systemctl": startDaemonSystemCtlResults,
+                    "bash": startDaemonCmdResults,
+                    "ipfsReady": ipfsReady,
+                };
             }
         }
-
     }
 
     async daemonStop(kwargs = {}) {

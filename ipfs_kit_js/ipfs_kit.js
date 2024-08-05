@@ -148,7 +148,7 @@ export class ipfsKitJs {
         }
     }
 
-    ipfsKitReady(kwargs = {} ) {
+    async ipfsKitReady(kwargs = {} ) {
         let clusterName = kwargs.clusterName || this.clusterName;
         if (!clusterName && this.role !== "leecher") {
             throw new Error("clusterName is not defined");
@@ -167,13 +167,13 @@ export class ipfsKitJs {
         if (this.role === "master") {
             ipfsClusterReady =  this.ipfsClusterService.ipfsClusterServiceReady();
         } else if (this.role === "worker") {
-            let dataIpfsFollow = this.ipfsClusterFollow.ipfsFollowInfo();
-            if (dataIpfsFollow.cluster_peer_online === 'true' && dataIpfsFollow.ipfs_peer_online === 'true' && dataIpfsFollow.cluster_name === clusterName) {
+            let dataIpfsFollow = await this.ipfsClusterFollow.ipfsFollowInfo();
+            if (dataIpfsFollow.clusterPeerOnline === 'true' && dataIpfsFollow.ipfsPeerOnline === 'true' && dataIpfsFollow.clusterName === clusterName) {
                 ipfsClusterReady = true;
             }
         }
 
-        if (this.role === "leecher" && ipfs_ready) {
+        if (this.role === "leecher" && ipfsReady) {
             ready = true;
         } else if (this.role !== "leecher" && ipfsReady && ipfsClusterReady) {
             ready = true;

@@ -100,7 +100,7 @@ export class installIpfs {
             if (this.role === "worker" && this.clusterName && this.ipfsPath) {
                 // Bind methods for worker role
                 this.clusterInstall = this.installIpfsClusterFollow.bind(this);
-                this.clusterConfig = this.configIPFSClusterFollow.bind(this);
+                this.clusterConfig = this.configIpfsClusterFollow.bind(this);
             }
 
             if (this.role === "master" && this.clusterName && this.ipfsPath) {
@@ -572,7 +572,7 @@ export class installIpfs {
         console.log(results);
     }
 
-    async configIpfsClusterFollow(kwargs) {
+    async configIpfsClusterFollow(kwargs = {}) {
         let results = {};
         let clusterName = kwargs.clusterName || this.clusterName;
         let diskStats = kwargs.diskStats || this.diskStats;
@@ -597,7 +597,7 @@ export class installIpfs {
             try {
                 let rmCommand = "rm -rf " + followPath;
                 let rmResults = execSync(rmCommand).toString();
-                let followInitcmd = "ipfs-cluster-follow " + clusterName + " init " + ipfsPath;
+                let followInitcmd = this.pathString + " ipfs-cluster-follow " + clusterName + " init " + ipfsPath;
                 followInitcmdResults = execSync(followInitcmd).toString();
 
                 if (!fs.existsSync(clusterPath)) fs.mkdirSync(clusterPath, { recursive: true });

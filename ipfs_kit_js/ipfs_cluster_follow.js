@@ -34,7 +34,7 @@ export default class IpfsClusterFollow {
             this.ipfsPath = meta.ipfsPath;
         }
 
-        if (meta.clusterName) {
+        if (meta.clusterName ) {
             this.clusterName = meta.clusterName;
         }
     }
@@ -77,8 +77,8 @@ export default class IpfsClusterFollow {
                 const commandRun = this.pathString + ` ipfs-cluster-follow ${clusterName} run`;
                 const process = exec(commandRun, (error, stdout, stderr) => {
                     if (error) {
-                        console.error(`Error running ipfs-cluster-follow: ${error.message}`);
-                        if (error.message.includes("command not found")){
+                        console.error(`Error running ipfs-cluster-follow: ${error}`);
+                        if (error.stdout.includes("command not found") || error.stdout.includes("This cluster peer has not been initialized.")) {
                             let InstallIpfs = new install_ipfs.InstallIpfs();
                             let installResults = InstallIpfs.installIpfsClusterFollow();
                             let configResults = InstallIpfs.configIpfsClusterFollow();
@@ -88,21 +88,38 @@ export default class IpfsClusterFollow {
                             exec(commandRun, (error, stdout, stderr) => {
                                 if (error) {
                                     console.error(`Error running ipfs-cluster-follow: ${error.message}`);
+                                    results.bash = error.message;
                                 }
-                                console.log(`ipfs-cluster-follow output: ${stdout}`);
+                                if (stderr) {
+                                    console.error(`Error running ipfs-cluster-follow: ${stderr}`);
+                                    results.bash = stderr;
+                                }
+                                if (stdout) {
+                                    console.log(`ipfs-cluster-follow output: ${stdout}`);
+                                    results.bash = stdout;
+                                }
                             });
                         }
-                        return;
+                        return results;
                     }
-                    console.log(`ipfs-cluster-follow output: ${stdout}`);
+                    if (stderr) {
+                        console.error(`Error running ipfs-cluster-follow: ${stderr}`);
+                        results.bash = stderr;
+                        return results;
+                    }
+                    if (stdout) {
+                        console.log(`ipfs-cluster-follow output: ${stdout}`);
+                        results.bash = stdout;
+                        return results;
+                    }
                 });
             }
             catch (error) {
                 console.log(`Error running ipfs-cluster-follow: ${error.message}`);
                 console.error(`Error in ipfsFollowStart: ${error.message}`);
             }
-        } 
-        return results;
+        }
+        // return results; 
     }
 
     async ipfsFollowStop() {
@@ -200,14 +217,13 @@ export default class IpfsClusterFollow {
     }
 
 
-    ipfsFollowInfo(kwargs = {}) {
+    async ipfsFollowInfo(kwargs = {}) {
         let clusterName = this.clusterName;
         let resultsDict = {};
-
+        const command = this.pathString + ` ipfs-cluster-follow ${clusterName} info`;
+        let results = null;
         try {
-            const command = this.pathString + ` ipfs-cluster-follow ${clusterName} info`;
-            let results = execSync(command, { encoding: 'utf8' }).trim().split("\n");
-
+            results = execSync(command, { encoding: 'utf8' }).trim().split("\n");
             if (results.length > 0) {
                 resultsDict = {
                     clusterName: clusterName,
@@ -219,16 +235,19 @@ export default class IpfsClusterFollow {
             }
         } catch (error) {
             if (error.stdout.includes("This cluster peer has not been initialized.")){
-                let InstallIpfs = new install_ipfs.InstallIpfs(undefined, { role: 'leecher', clusterName: clusterName, ipfs_path: this.ipfsPath });
-                let installResults = InstallIpfs.installIPFSClusterFollow();
-                let configResults = InstallIpfs.configIPFSClusterFollow();
+                let InstallIpfs = new install_ipfs.installIpfs(undefined, { role: 'leecher', clusterName: clusterName, ipfs_path: this.ipfsPath });
+                let installResults = await InstallIpfs.installIpfsClusterFollow();
+                let configResults = await InstallIpfs.configIpfsClusterFollow();
                 console.log(`Install IPFS Cluster Follow results: ${installResults}`);
                 console.log(`Configure IPFS Cluster Follow results: ${configResults}`);
                 console.log(`Attempting to run ipfs-cluster-follow info again`);
-                execSync(command, { encoding: 'utf8' });
-            }
-            else{
-                console.error(`Error executing ipfs-cluster-follow info: ${error.stdout}`);
+                try{
+                    results = execSync(command, { encoding: 'utf8' }).trim().split("\n");;
+                }
+                catch(error){
+                    console.error(`Error executing ipfs-cluster-follow info: ${error.message}`);
+                    results = error;
+                }
             }
         }
 
