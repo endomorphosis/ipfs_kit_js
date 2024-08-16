@@ -7,17 +7,25 @@ import Ipfs from './ipfs.js';
 import Ipget from './ipget.js';
 import IpfsClusterCtl from './ipfs_cluster_ctl.js';
 import IpfsClusterFollow from './ipfs_cluster_follow.js';
-import IpfsClusterService from './ipfs_cluster_service.js';
-
+import IpfsClusterService from './ipfs_cluster_service.js'; 
 const mkdir = promisify(fs.mkdir);
 const exists = promisify(fs.exists);
 const execProm = promisify(exec);
+import fs from 'fs';
+import { requireConfig } from '../config/config.js';
 
 export class ipfsKitJs {
     constructor(resources, meta = null) {
         this.thisDir = path.dirname(import.meta.url);
         if (this.thisDir.startsWith("file://")) {
             this.thisDir = this.thisDir.replace("file://", "");
+        }
+        this.parentDir = path.dirname(this.thisDir);
+        if (fs.existsSync(path.join(this.parentDir, "config", "config.toml"))) {
+            this.config = new requireConfig({config: path.join(this.parentDir, "config", "config.toml")});
+        }
+        else{
+            // this.config = new requireConfig();
         }
         this.meta = meta;
         this.resources = resources;
