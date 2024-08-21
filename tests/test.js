@@ -1,6 +1,8 @@
 import { ipfsKitJs } from "../ipfs_kit_js/ipfs_kit";
 import { IpfsClusterService } from "../ipfs_kit_js/ipfs_cluster_service";
 import { IpfsClusterFollow } from "../ipfs_kit_js/ipfs_cluster_follow";
+import { ipget } from "../ipfs_kit_js/ipget";
+import { requireConfig } from "../config/config";
 
 export default class ipfs_kit_tests {
     constructor() {
@@ -8,13 +10,30 @@ export default class ipfs_kit_tests {
     }
 
     async init() {
-        const meta = {
+        let meta = {
             role: "master",
             clusterName: "cloudkit_storage",
             clusterLocation: "/ip4/167.99.96.231/tcp/9096/p2p/12D3KooWKw9XCkdfnf8CkAseryCgS3VVoGQ6HUAkY91Qc6Fvn4yv",
             secret: "96d5952479d0a2f9fbf55076e5ee04802f15ae5452b5faafc98e2bd48cf564d3",
         };
+        this.thisDir = path.dirname(import.meta.url);
+        if (this.thisDir.startsWith("file://")) {
+            this.thisDir = this.thisDir.replace("file://", "");
+        }
+        this.parentDir = path.dirname(this.thisDir);
+        if (fs.existsSync(path.join(this.parentDir, "config", "config.toml"))) {
+            this.config = new requireConfig({config: path.join(this.parentDir, "config", "config.toml")});
+        }
+        else{
+            // this.config = new requireConfig();
+        }
+        for (let key in this.config) {
+            this[key] = meta[key];
+        }
         this.ipfsKitJs = new ipfsKitJs(null, meta);
+        this.ipget = new ipget(null, meta);
+        this.ipfsClusterFollow = new IpfsClusterFollow(null, meta);
+        this.ipfsClusterService = new IpfsClusterService(null, meta);
         
     }
 
@@ -287,14 +306,49 @@ export default class ipfs_kit_tests {
 }
 
 if (import.meta.url === import.meta.url) {
-    let test = new ipfs_kit_tests();
-    test.init().then(() => {
-        test.ipfs_kit_test().then((results) => {
+    let test_ipfs_kit = new ipfs_kit_tests();
+    let test_ipfs_cluster_service = new ipfs_kit_tests();
+    let test_ipfs_cluster_follow = new ipfs_kit_tests();
+    let test_ipget = new ipfs_kit_tests();
+    try{    
+        test_ipfs_cluster_service.ipfs_cluster_service_test().then((results) => {
             console.log(results);
         }).catch((e) => {
             console.error(e);
-        })
-    }).catch((e) => {
+            throw e;
+        });
+
+        test_ipfs_cluster_follow.ipfs_cluster_follow_test().then((results) => {
+            console.log(results);
+        }
+        ).catch((e) => {
+            console.error(e);
+            throw e;
+        });
+
+        test_ipget.ipget_test().then((results) => {
+            console.log(results);
+        }
+        ).catch((e) => {
+            console.error(e);
+            throw e;
+        });
+
+        test_ipfs_kit.init().then(() => {
+            test.ipfs_kit_test().then((results) => {
+                console.log(results);
+            }).catch((e) => {
+                console.error(e);
+                throw e;
+            })
+        }).catch((e) => {
+            console.error(e);
+            raise(e);
+        });
+
+    }
+    catch(e){
         console.error(e);
-    });
+        process.exit(1);
+    }
 }
