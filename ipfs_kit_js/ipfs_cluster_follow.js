@@ -311,19 +311,3 @@ export default class IpfsClusterFollow {
     }
 
 }
-
-async function test(){
-    const meta = {
-        role: "master",
-        clusterName: "cloudkit_storage",
-        clusterLocation: "/ip4/167.99.96.231/tcp/9096/p2p/12D3KooWKw9XCkdfnf8CkAseryCgS3VVoGQ6HUAkY91Qc6Fvn4yv",
-        secret: "96d5952479d0a2f9fbf55076e5ee04802f15ae5452b5faafc98e2bd48cf564d3",
-    };
-    const thisIpfsClusterFollow = new IpfsClusterFollow(null, meta);
-    const results = await thisIpfsClusterFollow.testIpfsClusterFollow();
-    console.log(results);
-}
-
-if (import.meta.url === import.meta.url) {
-    // test();
-}

@@ -2,7 +2,7 @@ import { exec, execSync } from 'child_process';
 import fs from 'fs';
 import os, { type } from 'os';
 import path from 'path';
-import { start } from 'repl';
+// import { start } from 'repl';
 import { installIpfs } from './install_ipfs.js';
 import util from 'util';
 

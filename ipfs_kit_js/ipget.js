@@ -94,30 +94,4 @@ export default class ipget {
         });
     }
 
-    async testIpget() {
-        
-        try {
-            const whichIpget = execSync(this.pathString + ' which ipget').toString().trim();
-            const ipgetDownloadObject = await this.ipgetDownloadObject({
-                cid: "QmccfbkWLYs9K3yucc6b3eSt8s8fKcyRRt24e3CDaeRhM1",
-                path: "/tmp/test"
-            });
-            if (ipgetDownloadObject.cid !== "QmccfbkWLYs9K3yucc6b3eSt8s8fKcyRRt24e3CDaeRhM1") {
-                return false;
-            }
-            if (fs.existsSync("/tmp/test") === false || fs.statSync("/tmp/test").size != ipgetDownloadObject.filesize) {
-                return false;
-            }
-            return true;
-        } catch (error) {
-            return false;
-        }
-    }
-}
-
-// create a test that runs only if the script is run directly, and it is an es Module without require
-if (import.meta.url === import.meta.url) {
-    // const ipgetInstance = new ipget();
-    // const testIpget = await ipgetInstance.testIpget();
-    // console.log(testIpget);
 }
