@@ -4,7 +4,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-export default class IpfsClusterService {
+export class IpfsClusterService {
     constructor(resources, meta = null) {
         this.thisDir = path.dirname(import.meta.url);
         if (this.thisDir.startsWith("file://")) {
@@ -140,3 +140,4 @@ export default class IpfsClusterService {
     }
 
 }
+export default IpfsClusterService;

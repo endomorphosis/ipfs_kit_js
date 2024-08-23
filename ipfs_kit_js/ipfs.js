@@ -531,7 +531,7 @@ export default class ipfs {
             throw new Error("newConfig not found");
         }
         if (!fs.existsSync(newConfig)) {
-            throw new Error("ipfsPath not found");
+            throw new Error("newConfig not found");
         }
         const command = this.pathString + ` IPFS_PATH=${this.ipfsPath}` + " ipfs config replace " + newConfig;
         try {

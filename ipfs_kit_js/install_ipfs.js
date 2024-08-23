@@ -8,7 +8,6 @@ import process from 'process';
 import { ChildProcess } from 'child_process';
 import { spawnSync } from 'child_process';
 import { spawn } from 'child_process';
-import { run } from 'shutil'
 import { randomUUID } from 'crypto';
 import crypto from 'crypto';
 import https from 'https';

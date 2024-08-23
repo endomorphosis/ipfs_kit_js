@@ -1,15 +1,14 @@
-import { ipfsKitJs } from "../ipfs_kit_js/ipfs_kit";
-import { IpfsClusterService } from "../ipfs_kit_js/ipfs_cluster_service";
-import { IpfsClusterFollow } from "../ipfs_kit_js/ipfs_cluster_follow";
-import { ipget } from "../ipfs_kit_js/ipget";
-import { requireConfig } from "../config/config";
+import { ipfsKitJs } from "../ipfs_kit_js/ipfs_kit.js";
+import { IpfsClusterService } from "../ipfs_kit_js/ipfs_cluster_service.js";
+import { IpfsClusterFollow } from "../ipfs_kit_js/ipfs_cluster_follow.js";
+import { ipget } from "../ipfs_kit_js/ipget.js";
+import { requireConfig } from "../config/config.js";
+import path from "path";
+import fs from "fs";
+import { execSync } from "child_process";
 
 export default class ipfs_kit_tests {
     constructor() {
-
-    }
-
-    async init() {
         let meta = {
             role: "master",
             clusterName: "cloudkit_storage",
@@ -30,11 +29,7 @@ export default class ipfs_kit_tests {
         for (let key in this.config) {
             this[key] = meta[key];
         }
-        this.ipfsKitJs = new ipfsKitJs(null, meta);
-        this.ipget = new ipget(null, meta);
-        this.ipfsClusterFollow = new IpfsClusterFollow(null, meta);
-        this.ipfsClusterService = new IpfsClusterService(null, meta);
-        
+        this.ipfsKitJs = new ipfsKitJs(null, meta);   
     }
 
 
@@ -73,21 +68,21 @@ export default class ipfs_kit_tests {
         let thisConfig = path.join(thisScriptFolderName, "config");
 
         try {
-            test_ipfs_kit_start = await this.ipfsKitStart();
+            test_ipfs_kit_start = await this.ipfsKitJs.ipfsKitStart();
         } catch (e) {
             test_ipfs_kit_start = e;
             console.error(e);
         }
 
         try {
-            test_ipfs_kit_ready = await this.ipfsKitReady();
+            test_ipfs_kit_ready = await this.ipfsKitJs.ipfsKitReady();
         } catch (e) {
             test_ipfs_kit_ready = e;
             console.error(e);
         }
 
         try{
-            test_ipfs_get_config = await this.ipfsGetConfig();
+            test_ipfs_get_config = await this.ipfsKitJs.ipfsGetConfig();
         }
         catch(e){
             test_ipfs_get_config = e;
@@ -95,7 +90,7 @@ export default class ipfs_kit_tests {
         }
 
         try{
-            test_ipfs_set_config = await this.ipfsSetConfig(thisConfig);
+            test_ipfs_set_config = await this.ipfsKitJs.ipfsSetConfig(thisConfig);
         }
         catch(e){
             test_ipfs_set_config = e;
@@ -103,7 +98,7 @@ export default class ipfs_kit_tests {
         }
 
         try{
-            test_ipfs_name_publish = await this.namePublish(thisScriptName);
+            test_ipfs_name_publish = await this.ipfsKitJs.namePublish(thisScriptName);
         }
         catch(e){
             test_ipfs_name_publish = e;
@@ -111,7 +106,7 @@ export default class ipfs_kit_tests {
         }
 
         try{
-            test_ipfs_name_resolve = await this.nameResolve(testIPNS);
+            test_ipfs_name_resolve = await this.ipfsKitJs.nameResolve(testIPNS);
         }
         catch(e){
             test_ipfs_name_resolve = e;
@@ -119,7 +114,7 @@ export default class ipfs_kit_tests {
         }
 
         try{
-            test_ipfs_set_config_value = await this.ipfsSetConfigValue('foo', 'bar');
+            test_ipfs_set_config_value = await this.ipfsKitJs.ipfsSetConfigValue('foo', 'bar');
         }
         catch(e){
             test_ipfs_set_config_value = e;
@@ -127,23 +122,23 @@ export default class ipfs_kit_tests {
         }
 
         try{
-            test_ipfs_get_config_value = await this.ipfsGetConfigValue('foo');
+            test_ipfs_get_config_value = await this.ipfsKitJs.ipfsGetConfigValue('foo');
         }
         catch(e){
             test_ipfs_get_config_value = e;
             console.error(e);
         }
 
-        // try {
-        //     test_update_collection_ipfs = await this.updateCollectionIpfs();
-        // }
-        // catch (e) {
-        //     test_update_collection_ipfs = e;
-        //     console.error(e);
-        // }
+        try {
+            test_update_collection_ipfs = await this.ipfsKitJs.updateCollectionIpfs();
+        }
+        catch (e) {
+            test_update_collection_ipfs = e;
+            console.error(e);
+        }
 
         try {
-            test_ipfs_add_path = await this.ipfsAddPath(thisScriptName);
+            test_ipfs_add_path = await this.ipfsKitJs.ipfsAddPath(thisScriptName);
         }
         catch (e) {
             test_ipfs_add_path = e;
@@ -151,7 +146,7 @@ export default class ipfs_kit_tests {
         }
 
         try {
-            test_ipfs_remove_path = await this.ipfsRemovePath(thisScriptName);
+            test_ipfs_remove_path = await this.ipfsKitJs.ipfsRemovePath(thisScriptName);
         }
         catch (e) {
             test_ipfs_remove_path = e;
@@ -159,7 +154,7 @@ export default class ipfs_kit_tests {
         }
 
         try {
-            test_ipfs_ls_path = await this.ipfsLsPath(thisScriptName);
+            test_ipfs_ls_path = await this.ipfsKitJs.ipfsLsPath(thisScriptName);
         }
         catch (e) {
             test_ipfs_ls_path = e;
@@ -167,35 +162,35 @@ export default class ipfs_kit_tests {
         }
 
         try {
-            test_ipfs_get_pinset = await this.ipfsGetPinset();
+            test_ipfs_get_pinset = await this.ipfsKitJs.ipfsGetPinset();
         } catch (e) {
             test_ipfs_get_pinset = e;
             console.error(e);
         }
 
         try {
-            test_ipfs_add_pin = await this.ipfsAddPin(testCidDownload);
+            test_ipfs_add_pin = await this.ipfsKitJs.ipfsAddPin(testCidDownload);
         } catch (e) {
             test_ipfs_add_pin = e;
             console.error(e);
         }
 
         try {
-            test_ipfs_remove_pin = await this.ipfsRemovePin(testCidDownload);
+            test_ipfs_remove_pin = await this.ipfsKitJs.ipfsRemovePin(testCidDownload);
         } catch (e) {
             test_ipfs_remove_pin = e;
             console.error(e);
         }
 
         try {
-            test_ipget_download_object = await this.ipgetDownloadObject(testCidDownload, testDownloadPath);
+            test_ipget_download_object = await this.ipfsKitJs.ipgetDownloadObject(testCidDownload, testDownloadPath);
         } catch (e) {
             test_ipget_download_object = e;
             console.error(e);
         }
 
         try {
-            test_ipfs_upload_object = await this.ipfsUploadObject(thisScriptName);
+            test_ipfs_upload_object = await this.ipfsKitJs.ipfsUploadObject(thisScriptName);
         }
         catch (e) {
             test_ipfs_upload_object = e;
@@ -203,7 +198,7 @@ export default class ipfs_kit_tests {
         }
 
         try {
-            test_ipfs_kit_stop = await this.ipfsKitStop();
+            test_ipfs_kit_stop = await this.ipfsKitJs.ipfsKitStop();
         }
         catch (e) {
             test_ipfs_kit_stop = e;
@@ -226,16 +221,31 @@ export default class ipfs_kit_tests {
 
     }
 
-    async ipfs_cluster_serice_test(){
-        const meta = {
+}
+
+export class ipfs_cluster_service_tests {
+    constructor() {
+        let meta = {
             role: "master",
             clusterName: "cloudkit_storage",
             clusterLocation: "/ip4/167.99.96.231/tcp/9096/p2p/12D3KooWKw9XCkdfnf8CkAseryCgS3VVoGQ6HUAkY91Qc6Fvn4yv",
             secret: "96d5952479d0a2f9fbf55076e5ee04802f15ae5452b5faafc98e2bd48cf564d3",
         };
-        const thisIpfsClusterService = new IpfsClusterService(null, meta);
-        const results = await thisIpfsClusterService.testIpfsClusterService();
-        console.log(results);
+        this.thisDir = path.dirname(import.meta.url);
+        if (this.thisDir.startsWith("file://")) {
+            this.thisDir = this.thisDir.replace("file://", "");
+        }
+        this.parentDir = path.dirname(this.thisDir);
+        if (fs.existsSync(path.join(this.parentDir, "config", "config.toml"))) {
+            this.config = new requireConfig({config: path.join(this.parentDir, "config", "config.toml")});
+        }
+        else{
+            // this.config = new requireConfig();
+        }
+        for (let key in this.config) {
+            this[key] = meta[key];
+        }
+        this.ipfsClusterService = new IpfsClusterService(null, meta); 
     }
     
     async ipfs_cluster_service_test(){
@@ -270,6 +280,33 @@ export default class ipfs_kit_tests {
             "testServiceStop": testServiceStop
         };
     }
+}
+
+
+export class ipfs_cluster_follow_tests {
+    constructor() {
+        let meta = {
+            role: "master",
+            clusterName: "cloudkit_storage",
+            clusterLocation: "/ip4/167.99.96.231/tcp/9096/p2p/12D3KooWKw9XCkdfnf8CkAseryCgS3VVoGQ6HUAkY91Qc6Fvn4yv",
+            secret: "96d5952479d0a2f9fbf55076e5ee04802f15ae5452b5faafc98e2bd48cf564d3",
+        };
+        this.thisDir = path.dirname(import.meta.url);
+        if (this.thisDir.startsWith("file://")) {
+            this.thisDir = this.thisDir.replace("file://", "");
+        }
+        this.parentDir = path.dirname(this.thisDir);
+        if (fs.existsSync(path.join(this.parentDir, "config", "config.toml"))) {
+            this.config = new requireConfig({config: path.join(this.parentDir, "config", "config.toml")});
+        }
+        else{
+            // this.config = new requireConfig();
+        }
+        for (let key in this.config) {
+            this[key] = meta[key];
+        }
+        this.ipfsClusterFollow = new IpfsClusterFollow(null, meta);
+    }
 
     async ipfs_cluster_follow_test(){
         const meta = {
@@ -283,34 +320,80 @@ export default class ipfs_kit_tests {
         console.log(results);
     }
 
+}
+
+export class ipget_tests {
+    constructor() {
+        let meta = {
+            role: "master",
+            clusterName: "cloudkit_storage",
+            clusterLocation: "/ip4/167.99.96.231/tcp/9096/p2p/12D3KooWKw9XCkdfnf8CkAseryCgS3VVoGQ6HUAkY91Qc6Fvn4yv",
+            secret: "96d5952479d0a2f9fbf55076e5ee04802f15ae5452b5faafc98e2bd48cf564d3",
+        };
+        this.thisDir = path.dirname(import.meta.url);
+        if (this.thisDir.startsWith("file://")) {
+            this.thisDir = this.thisDir.replace("file://", "");
+        }
+        this.parentDir = path.dirname(this.thisDir);
+        if (fs.existsSync(path.join(this.parentDir, "config", "config.toml"))) {
+            this.config = new requireConfig({config: path.join(this.parentDir, "config", "config.toml")});
+        }
+        else{
+            // this.config = new requireConfig();
+        }
+        for (let key in this.config) {
+            this[key] = meta[key];
+        }
+        this.ipget = new ipget(null, meta);
+    }
+
     async ipget_test() {
         
         try {
-            const whichIpget = execSync(this.pathString + ' which ipget').toString().trim();
-            const ipgetDownloadObject = await this.ipgetDownloadObject({
+            // const whichIpget = execSync(this.pathString + ' which ipget').toString().trim();
+            const ipgetDownloadObject = await this.ipget.ipgetDownloadObject({
                 cid: "QmccfbkWLYs9K3yucc6b3eSt8s8fKcyRRt24e3CDaeRhM1",
                 path: "/tmp/test"
             });
+            let tmpFileSize = fs.statSync("/tmp/test").size;
             if (ipgetDownloadObject.cid !== "QmccfbkWLYs9K3yucc6b3eSt8s8fKcyRRt24e3CDaeRhM1") {
                 return false;
             }
-            if (fs.existsSync("/tmp/test") === false || fs.statSync("/tmp/test").size != ipgetDownloadObject.filesize) {
+            if (fs.existsSync("/tmp/test") === false || tmpFileSize != ipgetDownloadObject.filesize) {
                 return false;
             }
             return true;
         } catch (error) {
-            return false;
+            console.log(error);
+            return error;
         }
     }
-
 }
 
-if (import.meta.url === import.meta.url) {
+if (import.meta.url === 'file://' + process.argv[1]) {
     let test_ipfs_kit = new ipfs_kit_tests();
-    let test_ipfs_cluster_service = new ipfs_kit_tests();
-    let test_ipfs_cluster_follow = new ipfs_kit_tests();
-    let test_ipget = new ipfs_kit_tests();
+    let test_ipfs_cluster_service = new ipfs_cluster_service_tests();
+    let test_ipfs_cluster_follow = new ipfs_cluster_follow_tests();
+    let test_ipget = new ipget_tests();
     try{    
+        test_ipget.ipget_test().then((results) => {
+            console.log("ipget_test results: ");
+            console.log(results);
+        }
+        ).catch((e) => {
+            console.error(e);
+            throw e;
+        });
+
+        test_ipfs_cluster_follow.ipfs_cluster_follow_test().then((results) => {
+            console.log("ipfs_cluster_follow_test results: ");
+            console.log(results);
+        }
+        ).catch((e) => {
+            console.error(e);
+            throw e;
+        });
+
         test_ipfs_cluster_service.ipfs_cluster_service_test().then((results) => {
             console.log(results);
         }).catch((e) => {
@@ -318,33 +401,12 @@ if (import.meta.url === import.meta.url) {
             throw e;
         });
 
-        test_ipfs_cluster_follow.ipfs_cluster_follow_test().then((results) => {
+        test_ipfs_kit.ipfs_kit_test().then((results) => {
             console.log(results);
-        }
-        ).catch((e) => {
-            console.error(e);
-            throw e;
-        });
-
-        test_ipget.ipget_test().then((results) => {
-            console.log(results);
-        }
-        ).catch((e) => {
-            console.error(e);
-            throw e;
-        });
-
-        test_ipfs_kit.init().then(() => {
-            test.ipfs_kit_test().then((results) => {
-                console.log(results);
-            }).catch((e) => {
-                console.error(e);
-                throw e;
-            })
         }).catch((e) => {
             console.error(e);
-            raise(e);
-        });
+            throw e;
+        })
 
     }
     catch(e){
@@ -352,3 +414,5 @@ if (import.meta.url === import.meta.url) {
         process.exit(1);
     }
 }
+
+

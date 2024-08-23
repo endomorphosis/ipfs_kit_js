@@ -4,14 +4,13 @@ import path from 'path';
 import os from 'os';
 import { promisify } from 'util';
 import Ipfs from './ipfs.js';
-import Ipget from './ipget.js';
+import ipget from './ipget.js';
 import IpfsClusterCtl from './ipfs_cluster_ctl.js';
 import IpfsClusterFollow from './ipfs_cluster_follow.js';
 import IpfsClusterService from './ipfs_cluster_service.js'; 
 const mkdir = promisify(fs.mkdir);
 const exists = promisify(fs.exists);
 const execProm = promisify(exec);
-import fs from 'fs';
 import { requireConfig } from '../config/config.js';
 
 export class ipfsKitJs {
@@ -82,7 +81,7 @@ export class ipfsKitJs {
         }
         if (["leecher", "worker", "master"].includes(this.role)) {
             this.ipfs = new Ipfs(resources, meta);
-            this.ipget = new Ipget(resources, meta);
+            this.ipget = new ipget(resources, meta);
         }
         if (this.role === "worker") {
             this.ipfsClusterFollow = new IpfsClusterFollow(resources, meta);

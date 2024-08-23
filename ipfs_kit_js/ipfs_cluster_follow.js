@@ -4,7 +4,7 @@ import path, { parse } from 'path';
 import fs from 'fs';
 import * as install_ipfs from './install_ipfs.js';
 
-export default class IpfsClusterFollow {
+export class IpfsClusterFollow {
     constructor(resources, meta) {
         this.thisDir = path.dirname(import.meta.url);
         if (this.thisDir.startsWith("file://")) {
@@ -187,10 +187,10 @@ export default class IpfsClusterFollow {
         let ipfsFollowListCmd = this.pathString + ` ipfs-cluster-follow ${clusterName} list`;
         let ipfsFollowListResults = null;
         try {
-            ipfsFollowListResults = execSync(command, { encoding: 'utf8' }).trim();
+            ipfsFollowListResults = execSync(ipfsFollowListCmd, { encoding: 'utf8' }).trim();
 
-            if (results.length > 0) {
-                let resultsArray = results.split("\n");
+            if (ipfsFollowListResults.length > 0) {
+                let resultsArray = ipfsFollowListResults.split("\n");
                 let resultsDict = {};
 
                 resultsArray.forEach((result) => {
@@ -211,7 +211,7 @@ export default class IpfsClusterFollow {
                 return false;
             }
         } catch (error) {
-            console.error(`Error executing ipfs-cluster-follow list: ${error.message}`);
+            console.error(`Error executing ipfs-cluster-follow list: ${error}`);
             return false;
         }
     }
@@ -311,3 +311,6 @@ export default class IpfsClusterFollow {
     }
 
 }
+
+// module.exports.default = IpfsClusterFollow; 
+export default IpfsClusterFollow;

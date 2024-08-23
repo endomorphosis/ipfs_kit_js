@@ -1,9 +1,8 @@
-import { execSync } from 'child_process';
-import { exec } from 'child_process';
+import { exec,  execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 
-export default class ipget {
+export class ipget {
     constructor(resources, meta = null) {
         this.thisDir = path.dirname(import.meta.url);
         if (this.thisDir.startsWith("file://")) {
@@ -45,16 +44,31 @@ export default class ipget {
     }
 
 
-    async ipgetDownloadObject(thisCid, thisPath, kwargs = {}) {
-        let cid = thisCid || kwargs.cid;
-        let dstPath = thisPath || kwargs.path;
-        // NOTE: Make sure this function can download both files and folders 
-        if (!kwargs.cid && !cid) {
-            throw new Error("cid not found in kwargs");
+    async ipgetDownloadObject(thisCid, thisPath) {
+        let cid
+        let dstPath
+        
+        if (typeof(thisCid) === 'object' && thisCid.path !== null) {
+            dstPath = thisCid.path;
         }
-        if (!kwargs.path, !dstPath) {
+        else if (typeof(thisPath) === 'string') {
+            dstPath = thisPath;
+        }
+
+        if (typeof(thisCid) === 'object' && thisCid.cid !== null) {
+            cid = thisCid.cid;
+        }
+        else if (typeof(thisCid) === 'string') {
+            cid = thisCid;
+        }
+        
+        if (!dstPath) {
             throw new Error("path not found in kwargs");
         }
+        if (!cid) {
+            throw new Error("cid not found in kwargs");
+        }
+
         if (fs.existsSync(dstPath)) {
             // pass
         }
@@ -94,4 +108,5 @@ export default class ipget {
         });
     }
 
-}
+} 
+export default ipget;
