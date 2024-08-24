@@ -510,6 +510,10 @@ if (import.meta.url === 'file://' + process.argv[1]) {
         testResults += "\n```\n";
     }
     fs.writeFileSync(testResultsFile, testResults);
+    if (Object.keys(test_results).includes("test_results") === false) {
+        process.exit(0);
+    }
+    else{
+        process.exit(1);
+    }   
 }
-
-
