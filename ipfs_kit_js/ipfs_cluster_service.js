@@ -85,7 +85,7 @@ export class IpfsClusterService {
                     console.log(`stdout: ${stdout}`);
                 }
             });
-            // return results;
+            return results;
         }
     }
 
