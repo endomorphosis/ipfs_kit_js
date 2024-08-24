@@ -500,8 +500,8 @@ if (import.meta.url === 'file://' + process.argv[1]) {
         test_results.test_results = e;
     }
     console.log(test_results);
-    fs.writeFileSync("./test_results.json", JSON.stringify(test_results, null, 2));
-    let testResultsFile = "./README.md";
+    fs.writeFileSync("./tests/test_results.json", JSON.stringify(test_results, null, 2));
+    let testResultsFile = "./tests/README.md";
     let testResults = "";
     for (let key in test_results) {
         testResults += key + "\n";
