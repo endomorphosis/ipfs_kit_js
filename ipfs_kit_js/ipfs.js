@@ -528,10 +528,10 @@ export default class ipfs {
     async ipfsSetConfig(newConfig) {
 
         if (newConfig == undefined) {
-            throw new Error("newConfig not found");
+            throw new Error("newConfig file is undefined");
         }
         if (!fs.existsSync(newConfig)) {
-            throw new Error("newConfig not found");
+            throw new Error("newConfig file not found");
         }
         const command = this.pathString + ` IPFS_PATH=${this.ipfsPath}` + " ipfs config replace " + newConfig;
         try {

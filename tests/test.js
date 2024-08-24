@@ -6,6 +6,7 @@ import { requireConfig } from "../config/config.js";
 import path from "path";
 import fs from "fs";
 import { execSync } from "child_process";
+import { t } from "tar";
 
 export default class ipfs_kit_tests {
     constructor() {
@@ -130,14 +131,6 @@ export default class ipfs_kit_tests {
         }
 
         try {
-            test_update_collection_ipfs = await this.ipfsKitJs.updateCollectionIpfs();
-        }
-        catch (e) {
-            test_update_collection_ipfs = e;
-            console.error(e);
-        }
-
-        try {
             test_ipfs_add_path = await this.ipfsKitJs.ipfsAddPath(thisScriptName);
         }
         catch (e) {
@@ -258,7 +251,7 @@ export class ipfs_cluster_service_tests {
     
         let testServiceStart = null;
         try{
-            testServiceStart = await this.ipfsClusterServiceStart();
+            testServiceStart = await this.ipfsClusterService.ipfsClusterServiceStart();
         }
         catch(error){
             console.error(error);
@@ -267,7 +260,7 @@ export class ipfs_cluster_service_tests {
         
         let testServiceStop = null;
         try{
-            testServiceStop = await this.ipfsClusterServiceStop();
+            testServiceStop = await this.ipfsClusterService.ipfsClusterServiceStop();
         }
         catch(error){
             console.error(error);
@@ -308,18 +301,70 @@ export class ipfs_cluster_follow_tests {
         this.ipfsClusterFollow = new IpfsClusterFollow(null, meta);
     }
 
-    async ipfs_cluster_follow_test(){
-        const meta = {
-            role: "master",
-            clusterName: "cloudkit_storage",
-            clusterLocation: "/ip4/167.99.96.231/tcp/9096/p2p/12D3KooWKw9XCkdfnf8CkAseryCgS3VVoGQ6HUAkY91Qc6Fvn4yv",
-            secret: "96d5952479d0a2f9fbf55076e5ee04802f15ae5452b5faafc98e2bd48cf564d3",
-        };
-        const thisIpfsClusterFollow = new IpfsClusterFollow(null, meta);
-        const results = await thisIpfsClusterFollow.testIpfsClusterFollow();
-        console.log(results);
-    }
+    async ipfs_cluster_follow_test(){        
+        let detect;
+        try {
+            detect = execSync( this.ipfsClusterFollow.pathString + ' which ipfs-cluster-follow').toString();
+            detect = detect.trim();
+        } catch (error) {
+            detect = '';
+        }
 
+        let ipfsFollowStop = null;
+        try{
+            ipfsFollowStop = await this.ipfsClusterFollow.ipfsFollowStop();
+        }
+        catch(error){
+            console.error(error);
+            ipfsFollowStop = error;
+        }
+
+        let ipfsFollowStart = null;
+        try{
+            ipfsFollowStart = await this.ipfsClusterFollow.ipfsFollowStart();
+        }
+        catch(error){
+            console.error(error);
+            ipfsFollowStart = error;
+        }
+
+        // let testFollowRun = null;
+        // try{
+        //     testFollowRun = await this.ipfsFollowRun();
+        // }
+        // catch(error){
+        //     console.error(error);
+        //     testFollowRun = error;
+        // }
+
+        let testFollowList = null;
+        try{
+            testFollowList = await this.ipfsClusterFollow.ipfsFollowList();
+        }
+        catch(error){
+            console.error(error);
+            testFollowList = error;
+        }
+
+        let testFollowInfo = null;
+        try{
+            testFollowInfo = await this.ipfsClusterFollow.ipfsFollowInfo();
+        }
+        catch(error){
+            console.error(error);
+            testFollowInfo = error;
+        }
+
+        let results = {
+            "detect": detect,
+            // "testFollowRun": testFollowRun,
+            "ipfsFollowStop": ipfsFollowStop,
+            "ipfsFollowStart": ipfsFollowStart,
+            "testFollowList": testFollowList,
+            "testFollowInfo": testFollowInfo
+        };
+        return results;
+    }
 }
 
 export class ipget_tests {
@@ -348,7 +393,6 @@ export class ipget_tests {
     }
 
     async ipget_test() {
-        
         try {
             // const whichIpget = execSync(this.pathString + ' which ipget').toString().trim();
             const ipgetDownloadObject = await this.ipget.ipgetDownloadObject({
@@ -375,35 +419,77 @@ if (import.meta.url === 'file://' + process.argv[1]) {
     let test_ipfs_cluster_service = new ipfs_cluster_service_tests();
     let test_ipfs_cluster_follow = new ipfs_cluster_follow_tests();
     let test_ipget = new ipget_tests();
+    let test_results = {}
     try{    
-        test_ipget.ipget_test().then((results) => {
+        await test_ipget.ipget_test().then((results) => {
             console.log("ipget_test results: ");
             console.log(results);
-        }
-        ).catch((e) => {
+            test_results.ipget_test = results;
+        }).catch((e) => {
+            test_results.ipget_test = e;
             console.error(e);
             throw e;
         });
 
-        test_ipfs_cluster_follow.ipfs_cluster_follow_test().then((results) => {
+        await test_ipfs_cluster_follow.ipfs_cluster_follow_test().then((results) => {
             console.log("ipfs_cluster_follow_test results: ");
             console.log(results);
-        }
-        ).catch((e) => {
+            test_results.ipfs_cluster_follow_test = results;
+            test_ipfs_cluster_follow.ipfsClusterFollow.ipfsFollowStop().then((results) => {
+                console.log(results);
+            }).catch((e) => {
+                console.error(e);
+                throw e;
+            })
+        }).catch((e) => {
+            test_results.ipfs_cluster_follow_test = e;
+            test_ipfs_cluster_follow.ipfsClusterFollow.ipfsFollowStop().then((results) => {
+                console.log(results);
+            }).catch((e) => {
+                console.error(e);
+            })
             console.error(e);
             throw e;
         });
 
-        test_ipfs_cluster_service.ipfs_cluster_service_test().then((results) => {
+        await test_ipfs_cluster_service.ipfs_cluster_service_test().then((results) => {
+            console.log("ipfs_cluster_service_test results: ");
             console.log(results);
+            test_results.ipfs_cluster_service_test = results;
+            test_ipfs_cluster_service.ipfsClusterService.ipfsClusterServiceStop().then((results) => {
+                console.log(results);
+            }).catch((e) => {
+                console.error(e);
+                throw e;
+            });
         }).catch((e) => {
+            testResults.ipfs_cluster_service_test = e;
+            test_ipfs_cluster_service.ipfsClusterService.ipfsClusterServiceStop().then((results) => {
+                console.log(results);
+            }).catch((e) => {
+                console.error(e);
+            })
             console.error(e);
             throw e;
         });
 
-        test_ipfs_kit.ipfs_kit_test().then((results) => {
+        await test_ipfs_kit.ipfs_kit_test().then((results) => {
+            console.log("ipfs_kit_test results: ");
             console.log(results);
+            test_results.ipfs_kit_test = results;
+            test_ipfs_kit.ipfsKitJs.ipfsKitStop().then((results) => {
+                console.log(results);
+            }).catch((e) => {
+                console.error(e);
+                throw e;
+            });
         }).catch((e) => {
+            testResults.ipfs_kit_test = e;
+            test_ipfs_kit.ipfsKitJs.ipfsKitStop().then((results) => {
+                console.log(results);
+            }).catch((e) => {
+                console.error(e);
+            })
             console.error(e);
             throw e;
         })
@@ -411,8 +497,19 @@ if (import.meta.url === 'file://' + process.argv[1]) {
     }
     catch(e){
         console.error(e);
-        process.exit(1);
+        test_results.test_results = e;
     }
+    console.log(test_results);
+    fs.writeFileSync("./test_results.json", JSON.stringify(test_results, null, 2));
+    let testResultsFile = path.join(thisScriptFolderName, "README.md");
+    let testResults = "";
+    for (let key in test_results) {
+        testResults += key + "\n";
+        testResults += "```json\n";
+        testResults += JSON.stringify(test_results[key], null, 2);
+        testResults += "\n```\n";
+    }
+    fs.writeFileSync(testResultsFile, testResults);
 }
 
 

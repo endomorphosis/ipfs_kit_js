@@ -119,7 +119,7 @@ export class IpfsClusterFollow {
                 console.error(`Error in ipfsFollowStart: ${error.message}`);
             }
         }
-        // return results; 
+        return results; 
     }
 
     async ipfsFollowStop() {
@@ -254,61 +254,16 @@ export class IpfsClusterFollow {
         return resultsDict;
     }
 
-    async ipfsFollowRun(kwargs = {}) {
-        let clusterName = this.clusterName;
-        if ('clusterName' in kwargs) {
-            clusterName = kwargs['clusterName'];
-        }
-
-        const command = this.pathString + ` ipfs-cluster-follow ${clusterName} run`;
-        let results = execSync(command).toString();
-        results = results.split("\n");
-        return results;
-    }
-
-    async testIpfsClusterFollow() {
-        let detect;
-        try {
-            detect = execSync( this.pathString + ' which ipfs-cluster-follow').toString();
-        } catch (error) {
-            detect = '';
-        }
-        
-        let testFollowRun = null;
-        try{
-            testFollowRun = await this.ipfsFollowRun();
-        }
-        catch(error){
-            console.error(error);
-            testFollowRun = error;
-        }
-
-        let testFollowList = null;
-        try{
-            testFollowList = await this.ipfsFollowList();
-        }
-        catch(error){
-            console.error(error);
-            testFollowList = error;
-        }
-
-        let testFollowInfo = null;
-        try{
-            testFollowInfo = await this.ipfsFollowInfo();
-        }
-        catch(error){
-            console.error(error);
-            testFollowInfo = error;
-        }
-
-        let results = {
-            "detect": detect,
-            "testFollowRun": testFollowRun,
-            "testFollowList": testFollowList,
-            "testFollowInfo": testFollowInfo
-        };
-        
-    }
+    // async ipfsFollowRun(kwargs = {}) {
+    //     let clusterName = this.clusterName;
+    //     if ('clusterName' in kwargs) {
+    //         clusterName = kwargs['clusterName'];
+    //     }
+    //     const command = this.pathString + ` ipfs-cluster-follow ${clusterName} run`;
+    //     let results = execSync(command).toString();
+    //     results = results.split("\n");
+    //     return results;
+    // }
 
 }
 
