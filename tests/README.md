@@ -21,7 +21,7 @@ ipfs_cluster_follow_test
     "configFolder": "/home/barberb/.ipfs-cluster-follow/cloudkit_storage",
     "configSource": "Available ()",
     "clusterPeerOnline": "false",
-    "ipfsPeerOnline": "true"
+    "ipfsPeerOnline": "false"
   }
 }
 ```
@@ -40,14 +40,14 @@ ipfs_cluster_service_test
     "killed": false,
     "spawnfile": "/bin/sh",
     "_handle": {
-      "pid": 1039995
+      "pid": 1710425
     },
     "spawnargs": [
       "/bin/sh",
       "-c",
       "PATH=/home/barberb/.local/bin:/home/barberb/.nvm/versions/node/v22.5.1/bin:/home/barberb/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/barberb/ipfs_kit_js/ipfs_kit_js/bin IPFS_CLUSTER_PATH=/home/barberb/.cache/ipfs ipfs-cluster-service daemon "
     ],
-    "pid": 1039995,
+    "pid": 1710425,
     "stdin": {
       "connecting": false,
       "_hadError": false,
@@ -240,7 +240,10 @@ ipfs_cluster_service_test
     ]
   },
   "testServiceStop": {
-    "ipfsClusterService": ""
+    "ipfsClusterService": [
+      "",
+      ""
+    ]
   }
 }
 ```

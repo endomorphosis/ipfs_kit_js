@@ -97,10 +97,22 @@ export class IpfsClusterService {
             ipfsClusterServiceResults = execSync(ipfsClusterServiceCmd).toString();
         }
         else{
-            ipfsClusterServiceCmd = "ps -ef | grep ipfs-cluster-service | grep -v grep | awk '{print $2}' | xargs kill -9"
-            ipfsClusterServiceResults = execSync(ipfsClusterServiceCmd).toString();
+            ipfsClusterServiceCmd = "ps -ef | grep ipfs-cluster-service | grep -v grep | awk '{print $2}' "
+            let ipfsClusterServiceCmdResults = execSync(ipfsClusterServiceCmd).toString().trim().split("\n");
+            ipfsClusterServiceResults = [];
+            for (let i = 0; i < ipfsClusterServiceCmdResults.length && ipfsClusterServiceCmdResults[i].trim() != '' ; i++) {
+                let psCmd = `ps -ef | grep -v grep | grep ${ipfsClusterServiceCmdResults[i]}`;
+                let psResults = execSync(psCmd).toString().trim();
+                if (psResults.includes('root')){
+                    console.log("cannot kill root process" + ipfsClusterServiceCmdResults[i]);
+                    ipfsClusterServiceResults[i] = "cannot kill root process " + ipfsClusterServiceCmdResults[i];
+                }
+                else if (psResults !== "") {
+                    let ipfsClusterKillCmd =`kill -9 ${ipfsClusterServiceCmdResults[i]}`;
+                    ipfsClusterServiceResults[i] = execSync(ipfsClusterKillCmd).toString();
+                }
+            }
         }
-
         return {
             "ipfsClusterService": ipfsClusterServiceResults
         };
