@@ -16,8 +16,8 @@
     "type": "git",
     "url": "git+https://github.com/endomorphosis/ipfs_kit_js.git"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Benjamin Barber",
+  "license": "AGPL-3.0-only",
   "bugs": {
     "url": "https://github.com/endomorphosis/ipfs_kit_js/issues"
   },
