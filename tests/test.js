@@ -1,6 +1,7 @@
 import { ipfsKitJs } from "../ipfs_kit_js/ipfs_kit.js";
 import { IpfsClusterService } from "../ipfs_kit_js/ipfs_cluster_service.js";
 import { IpfsClusterFollow } from "../ipfs_kit_js/ipfs_cluster_follow.js";
+import { ipfs } from "../ipfs_kit_js/ipfs.js";
 import { ipget } from "../ipfs_kit_js/ipget.js";
 import { requireConfig } from "../config/config.js";
 import path from "path";
@@ -406,12 +407,202 @@ export class ipget_tests {
     }
 }
 
+export class ipfs_tests {
+    constructor() {
+        let meta = {
+            role: "master",
+            clusterName: "cloudkit_storage",
+            clusterLocation: "/ip4/167.99.96.231/tcp/9096/p2p/12D3KooWKw9XCkdfnf8CkAseryCgS3VVoGQ6HUAkY91Qc6Fvn4yv",
+            secret: "96d5952479d0a2f9fbf55076e5ee04802f15ae5452b5faafc98e2bd48cf564d3",
+        };
+        this.thisDir = path.dirname(import.meta.url);
+        if (this.thisDir.startsWith("file://")) {
+            this.thisDir = this.thisDir.replace("file://", "");
+        }
+        this.parentDir = path.dirname(this.thisDir);
+        if (fs.existsSync(path.join(this.parentDir, "config", "config.toml"))) {
+            this.config = new requireConfig({config: path.join(this.parentDir, "config", "config.toml")});
+        }
+        else{
+            // this.config = new requireConfig();
+        }
+        for (let key in this.config) {
+            this[key] = meta[key];
+        }
+        this.ipfs = new ipfs(null, meta);
+    }
+        
+    async ipfs_tests() {
+        let testCidDownload =  "QmccfbkWLYs9K3yucc6b3eSt8s8fKcyRRt24e3CDaeRhM1";
+        testCidDownload = 'bafybeifx7yeb55armcsxwwitkymga5xf53dxiarykms3ygqic223w5sk3m'
+        testCidDownload = 'QmSgvgwxZGaBLqkGyWemEDqikCqU52XxsYLKtdy3vGZ8uq'
+
+        let testDownloadPath = "/tmp/test";
+        let thisScriptName = path.join(this.thisDir, path.basename(import.meta.url));
+
+        let detect = null;
+        try {
+            detect = await new Promise((resolve, reject) => {
+                let detectCmd = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString +  " which ipfs";
+                exec( detectCmd , (error, stdout, stderr) => {
+                    if (error) {
+                        detect = error.message;
+                        console.error(error);
+                        reject(error.message);
+                    }
+                    if (stderr) {
+                        detect = stderr;
+                        console.error(stderr);
+                        reject(stderr);
+                    }
+                    if (stdout) {
+                        detect = stdout;
+                        resolve(stdout);
+                    }
+                });
+            });
+        } catch (error) {
+            detect = error;
+        }
+
+        let testDaemonStart = null;   
+        try {
+            testDaemonStart = await this.ipfs.daemonStart();
+            console.log(testDaemonStart);
+        }
+        catch (error) {
+            testDaemonStart = error;
+            console.error(error);
+        }
+
+        let testAddPin = null;
+        try{
+            testAddPin = await this.ipfs.ipfsAddPin(testCidDownload);
+            console.log(testAddPin);
+        } catch (error) {
+            testAddPin = error;
+            console.error(error);
+        }
+
+        let testLsPin = null;
+        try {
+            testLsPin = await this.ipfs.ipfsLsPin( { "hash": testCidDownload } );
+            console.log(testLsPin);
+        } catch (error) {
+            testLsPin = error;
+            console.error(error);
+        }
+
+
+        let testGetPinset = null;
+        try {
+            testGetPinset = await this.ipfs.ipfsGetPinset();
+            console.log(testGetPinset);
+        } catch (error) {
+            testGetPinset = error;
+            console.error(error);
+        }
+
+        let testAddPath = null;
+        try {
+            testAddPath = await this.ipfs.ipfsAddPath(thisScriptName);
+            console.log(testAddPath);
+        } catch (error) {
+            testAddPath = error;
+            console.error(error);
+        }
+
+        let testRemovePath = null;
+        try {
+            testRemovePath = await this.ipfs.ipfsRemovePath(thisScriptName);
+            console.log(testRemovePath);
+        } catch (error) {
+            testRemovePath = error;
+            console.error(error);
+        }
+
+        let testStatPath = null;
+        try {
+            testStatPath = await this.ipfs.ipfsStatPath(thisScriptName);
+            console.log(testStatPath);
+        } catch (error) {
+            testStatPath = error;
+            console.error(error);
+        }
+
+        let testNameResolve = null;
+        try {
+            testNameResolve = await this.ipfs.ipfsNameResolve(thisScriptName);
+            console.log(testNameResolve);
+        } catch (error) {
+            testNameResolve = error;
+            console.error(error);
+        }
+
+        let testNamePublish = null;
+        try {
+            testNamePublish = await this.ipfs.ipfsNamePublish(thisScriptName);
+            console.log(testNamePublish);
+        } catch (error) {
+            testNamePublish = error;
+            console.error(error);
+        }
+
+        let testLsPath = null;
+        try {
+            testLsPath = await this.ipfs.ipfsLsPath(thisScriptName);
+            console.log(testLsPath);
+        } catch (error) {
+            testLsPath = error;
+            console.error(error);
+        }
+
+        let testRemovePin = null;
+        try {
+            testRemovePin = await this.ipfs.ipfsRemovePin(testCidDownload);
+            console.log(testRemovePin);
+        } catch (error) {
+            testRemovePin = error;
+            console.error(error);
+        }
+
+        let testStopDaemon = null;
+        try {
+            testStopDaemon = await this.ipfs.daemonStop();
+            console.log(testStopDaemon);
+        } catch (error) {
+            testStopDaemon = error;
+            console.error(error);
+        }
+
+        let results = {
+            "which_ipfs": detect,
+            "daemon_start": testDaemonStart,
+            "ls_pin": testLsPin,
+            "add_pin": testAddPin,
+            "get_pinset": testGetPinset,
+            "add_path": testAddPath,
+            "remove_path": testRemovePath,
+            "stat_path": testStatPath,
+            "name_resolve": testNameResolve,
+            "name_publish": testNamePublish,
+            "ls_path": testLsPath,
+            "remove_pin": testRemovePin,
+            "daemon_stop": testStopDaemon
+        };
+
+        return results;
+    }
+}
+
 if (import.meta.url === 'file://' + process.argv[1]) {
     let test_ipfs_kit = new ipfs_kit_tests();
     let test_ipfs_cluster_service = new ipfs_cluster_service_tests();
     let test_ipfs_cluster_follow = new ipfs_cluster_follow_tests();
     let test_ipget = new ipget_tests();
+    let test_ipfs = new ipfs_tests();
     let test_results = {}
+
     try{    
         await test_ipget.ipget_test().then((results) => {
             console.log("ipget_test results: ");
@@ -423,16 +614,10 @@ if (import.meta.url === 'file://' + process.argv[1]) {
             throw e;
         });
 
-        // await test_ipfs_cluster_follow.ipfs_cluster_follow_test().then((results) => {
+        // await test_ipfs.ipfs_test().then((results) => {
         //     console.log("ipfs_cluster_follow_test results: ");
         //     console.log(results);
-        //     test_results.ipfs_cluster_follow_test = results;
-        //     test_ipfs_cluster_follow.ipfsClusterFollow.ipfsFollowStop().then((results) => {
-        //         console.log(results);
-        //     }).catch((e) => {
-        //         console.error(e);
-        //         // throw e;
-        //     });
+        //     test_results.ipfs_test = results;
         // }).catch((e) => {
         //     test_results.ipfs_cluster_follow_test = e;
         //     test_ipfs_cluster_follow.ipfsClusterFollow.ipfsFollowStop().then((results) => {
@@ -443,6 +628,27 @@ if (import.meta.url === 'file://' + process.argv[1]) {
         //     console.error(e);
         //     // throw e;
         // });
+
+        await test_ipfs_cluster_follow.ipfs_cluster_follow_test().then((results) => {
+            console.log("ipfs_cluster_follow_test results: ");
+            console.log(results);
+            test_results.ipfs_cluster_follow_test = results;
+            test_ipfs_cluster_follow.ipfsClusterFollow.ipfsFollowStop().then((results) => {
+                console.log(results);
+            }).catch((e) => {
+                console.error(e);
+                // throw e;
+            });
+        }).catch((e) => {
+            test_results.ipfs_cluster_follow_test = e;
+            test_ipfs_cluster_follow.ipfsClusterFollow.ipfsFollowStop().then((results) => {
+                console.log(results);
+            }).catch((e) => {
+                console.error(e);
+            })
+            console.error(e);
+            // throw e;
+        });
 
         await test_ipfs_cluster_service.ipfs_cluster_service_test().then((results) => {
             console.log("ipfs_cluster_service_test results: ");
@@ -486,6 +692,12 @@ if (import.meta.url === 'file://' + process.argv[1]) {
         //     // throw e;
         // })
 
+        test_ipfs.ipfs.daemonStop().then((results) => {
+            console.log(results);
+        }).catch((e) => {
+            console.error(e);
+            // throw e;
+        });
     }
     catch(e){
         console.error(e);
