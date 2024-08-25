@@ -202,7 +202,9 @@ export class IpfsClusterFollow {
                         if (error != undefined && error.message.includes("connection refused")){
                             throw new Error("connection refused");
                         }
-
+                        results.bash = error.message;
+                        console.error(`Error in ipfsFollowStart: ${error.message}`);
+                        return results;
                     }
                     if (stderr) {
                         console.error(`Error running ipfs-cluster-follow: ${stderr}`);

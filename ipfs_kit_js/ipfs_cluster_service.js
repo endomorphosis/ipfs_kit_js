@@ -1,4 +1,5 @@
  
+import { rejects } from 'assert';
 import { exec, execSync } from 'child_process';
 import fs from 'fs';
 import os from 'os';
@@ -64,35 +65,153 @@ export class IpfsClusterService {
     }
 
     async ipfsClusterServiceStart() {
+        let results = { systemctl: false, bash: {} };
+        let detectResults
+    
+        let psIpfsCmd = "ps -ef | grep ipfs | grep -v grep | grep -v systemctl";
+        let psIpfsCmdResults = '';
+        
+        try{
+            psIpfsCmdResults = execSync(psIpfsCmd).toString().trim();
+            // console.log(`psIpfsCmdResults: ${psIpfsCmdResults}`);
+        }
+        catch (error) {
+            //
+        }
+
         if (os.userInfo().uid === 0) {
-            const command = this.pathString + " systemctl start ipfs-cluster-service";
-            const results = execSync(command).toString();
-            return results;
+
+            if (psIpfsCmdResults.length === 0) {
+                try{
+                    // Attempt to start the ipfs service
+                    let systemctlStart = execSync("systemctl start ipfs").toString();
+                    results.systemctl = systemctlStart;
+                    // Check if the service is running
+                    detectResults = execSync("ps -ef | grep ipfs | grep -v grep").toString().trim();
+                    if (detectResults.length === 0) {
+                        const homeDir = os.homedir();
+                        const ipfsDir = path.join(homeDir, ".ipfs");
+                        // Check for and remove the api-socket file if it exists
+                        const apiSocketPath = path.join(ipfsDir, "api-socket");
+                        if (fs.existsSync(apiSocketPath)) {
+                            fs.unlinkSync(apiSocketPath);
+                            results.bash = true;
+                        }
+                        // Attempt to start the ipfs service
+                        let systemctlStart = execSync("systemctl start ipfs").toString();
+                        results.systemctl = systemctlStart;
+                        // Check if the service is running
+                        detectResults = execSync("ps -ef | grep ipfs | grep -v grep").toString().trim();
+                    }       
+                }
+                catch (error) {
+                    console.log(`Error starting ipfs: ${error.message}`);
+                    results.systemctl += `Error: ${error.message}`;
+                }
+            }
+            try{
+                const ipfsClusterCmd = this.pathString + " systemctl start ipfs-cluster-service";
+                const ipfsClusterCmdResults = execSync(command).toString().trim();
+                results.systemctl = ipfsClusterCmdResults;
+                return results;
+            }
+            catch (error) {
+                console.log(`Error starting ipfs-cluster-service: ${error.message}`);
+                results.systemctl += `Error: ${error.message}`;
+                return results;
+            }
         }
         else{
-            // const command = this.pathString + ` IPFS_CLUSTER_PATH=${this.ipfsPath} ipfs-cluster-service daemon --bootstrap /ip4/167.99.96.231/tcp/9096/p2p/12D3KooWDYKMnVLKnP2SmM8umJEEKdhug93QYybmNUEiSe1Kwjmu`
-            const command = this.pathString + ` IPFS_CLUSTER_PATH=${this.ipfsPath} ipfs-cluster-service daemon `
-            const results = exec(command, (error, stdout, stderr) => {
-                if (error) {
-                    console.error(`error: ${error.message}`);
-                    return { "error": error.message };
+            if (psIpfsCmdResults.length === 0) {  
+                try{
+                    // Attempt to start the ipfs service
+                    let ipfsStartCmd = this.pathString + " ipfs daemon";
+                    let ipfsStart = exec(ipfsStartCmd, (error, stdout, stderr) => {
+                        if (error) {
+                            console.error(`Error starting ipfs: ${error.message}`);
+                            // results.bash = `Error: ${error.message}`;
+                        }
+                        if (stderr) {
+                            console.error(`Error starting ipfs: ${stderr}`);
+                            // results.bash = stderr;
+                        }
+                        if (stdout) {
+                            console.log(`ipfs output: ${stdout}`);
+                            // results.bash = stdout;
+                        }
+                    });
+                    // Check if the service is running
+                    detectResults = execSync("ps -ef | grep ipfs | grep -v grep").toString().trim();
+                    if (detectResults.length === 0) {
+                        const homeDir = os.homedir();
+                        const ipfsDir = path.join(homeDir, ".ipfs");
+                        // Check for and remove the api-socket file if it exists
+                        const apiSocketPath = path.join(ipfsDir, "api-socket");
+                        if (fs.existsSync(apiSocketPath)) {
+                            fs.unlinkSync(apiSocketPath);
+                            results.bash = true;
+                        }
+                        // Attempt to start the ipfs service
+                        let ipfsStartCmd = this.pathString + " ipfs daemon";
+                        let ipfsStart = exec(ipfsStartCmd, (error, stdout, stderr) => {
+                            if (error) {
+                                console.error(`Error starting ipfs: ${error.message}`);
+                                // results.bash = `Error: ${error.message}`;
+                            }
+                            if (stderr) {
+                                console.error(`Error starting ipfs: ${stderr}`);
+                                // results.bash = stderr;
+                            }
+                            if (stdout) {
+                                console.log(`ipfs output: ${stdout}`);
+                                // results.bash = stdout;
+                            }
+                        });
+                        // Check if the service is running
+                        detectResults = execSync("ps -ef | grep ipfs | grep -v grep").toString().trim();
+                    }
                 }
-                if (stderr) {
-                    console.error(`stderr: ${stderr}`);
-                    return { "stderr": stderr };
+                catch (error) {
+                    console.log(`Error starting ipfs: ${error.message}`);
+                    results.bash = `Error: ${error.message}`;
                 }
-                if (stdout) {
-                    console.log(`stdout: ${stdout}`);
-                    return { "stdout": stdout };
-                }
-            });
-
-            // wait for one second to check if the service is running
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            let stdout = results.stdout;
-            return stdout;
-            // return results;
+            }
+            try{
+                const ipfsClusterCmd = this.pathString + ` IPFS_CLUSTER_PATH=${this.ipfsPath} ipfs-cluster-service daemon `
+                const ipfsClusterCmdResults = exec(ipfsClusterCmd)
+                let stdout = '';
+                let stderr = '';
+                ipfsClusterCmdResults.stdout.on('data', data => {
+                    stdout += data;
+                    console.log(`stdout: ${data}`);
+                });
+                await new Promise(resolve => {
+                    ipfsClusterCmdResults.stderr.on('data', data => {
+                        stderr += data;
+                        if (data.includes('ERROR')) {
+                            console.error(`stderr: ${data}`);
+                            resolve();
+                        }
+                    });
+                    ipfsClusterCmdResults.on('error', error => {
+                        console.error(`error: ${error.message}`);
+                        resolve();
+                    });
+                    ipfsClusterCmdResults.stdout.on('end', () => {
+                        // resolve();
+                        console.log(`stdout: ${stdout}`);
+                    });
+                    setTimeout(resolve, 20000);
+                });
+                results.bash.stdout = stdout;
+                results.bash.stderr = stderr;
+            }
+            catch (error) {
+                console.log(`Error starting ipfs-cluster-service: ${error.message}`);
+                results.bash = `Error: ${error.message}`;
+            }
         }
+        return results; 
     }
 
     async ipfsClusterServiceStop() {
