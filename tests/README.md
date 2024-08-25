@@ -12,79 +12,16 @@ ipfs_cluster_follow_test
     "api-socket": "api-socket not found, deleting not necessary"
   },
   "ipfsFollowStart": {
-    "status": 1,
-    "signal": null,
-    "output": [
-      null,
-      {
-        "type": "Buffer",
-        "data": []
-      },
-      {
-        "type": "Buffer",
-        "data": []
-      }
-    ],
-    "pid": 1726346,
-    "stdout": {
-      "type": "Buffer",
-      "data": []
-    },
-    "stderr": {
-      "type": "Buffer",
-      "data": []
-    }
+    "systemctl": false,
+    "bash": "Starting the IPFS Cluster follower peer for \"cloudkit_storage\".\nCTRL-C to stop it.\nChecking if IPFS is online (will wait for 2 minutes)...\nwaiting for IPFS to become available on /ip4/127.0.0.1/tcp/5001...\n"
   },
-  "testFollowList": false,
+  "testFollowList": "none",
   "testFollowInfo": {
     "clusterName": "cloudkit_storage",
     "configFolder": "/home/barberb/.ipfs-cluster-follow/cloudkit_storage",
     "configSource": "Available ()",
-    "clusterPeerOnline": "false",
-    "ipfsPeerOnline": "false"
-  }
-}
-```
-ipfs_cluster_service_test
-```json
-{
-  "detect": "/home/barberb/ipfs_kit_js/ipfs_kit_js/bin/ipfs-cluster-service",
-  "testServiceStart": {
-    "connecting": false,
-    "_hadError": false,
-    "_parent": null,
-    "_host": null,
-    "_closeAfterHandlingError": false,
-    "_events": {},
-    "_readableState": {
-      "highWaterMark": 65536,
-      "buffer": [],
-      "bufferIndex": 0,
-      "length": 0,
-      "pipes": [],
-      "awaitDrainWriters": null
-    },
-    "_writableState": {
-      "highWaterMark": 65536,
-      "length": 0,
-      "corked": 0,
-      "writelen": 0,
-      "bufferedIndex": 0,
-      "pendingcb": 0
-    },
-    "allowHalfOpen": false,
-    "_eventsCount": 3,
-    "_sockname": null,
-    "_pendingData": null,
-    "_pendingEncoding": "",
-    "server": null,
-    "_server": null
-  },
-  "testServiceStop": {
-    "ipfsClusterService": [
-      "",
-      ""
-    ]
+    "clusterPeerOnline": "true",
+    "ipfsPeerOnline": "true"
   }
 }
 ```
