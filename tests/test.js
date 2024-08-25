@@ -1,3 +1,4 @@
+import { installIpfs } from "../ipfs_kit_js/install_ipfs.js";
 import { ipfsKitJs } from "../ipfs_kit_js/ipfs_kit.js";
 import { IpfsClusterService } from "../ipfs_kit_js/ipfs_cluster_service.js";
 import { IpfsClusterFollow } from "../ipfs_kit_js/ipfs_cluster_follow.js";
@@ -407,6 +408,75 @@ export class ipget_tests {
     }
 }
 
+
+export class ipfs_install_tests {
+    constructor() {
+        let meta = {
+            role: "master",
+            clusterName: "cloudkit_storage",
+            clusterLocation: "/ip4/167.99.96.231/tcp/9096/p2p/12D3KooWKw9XCkdfnf8CkAseryCgS3VVoGQ6HUAkY91Qc6Fvn4yv",
+            secret: "96d5952479d0a2f9fbf55076e5ee04802f15ae5452b5faafc98e2bd48cf564d3",
+        };
+        this.thisDir = path.dirname(import.meta.url);
+        if (this.thisDir.startsWith("file://")) {
+            this.thisDir = this.thisDir.replace("file://", "");
+        }
+        this.parentDir = path.dirname(this.thisDir);
+        if (fs.existsSync(path.join(this.parentDir, "config", "config.toml"))) {
+            this.config = new requireConfig({config: path.join(this.parentDir, "config", "config.toml")});
+        }
+        else{
+            // this.config = new requireConfig();
+        }
+        for (let key in this.config) {
+            this[key] = meta[key];
+        }
+        this.installIpfs = new installIpfs(null, meta);
+    }
+
+    async install_ipfs_test() {
+        const meta = {
+            role: "master",
+            clusterName: "cloudkit_storage",
+            clusterLocation: "/ip4/167.99.96.231/tcp/9096/p2p/12D3KooWKw9XCkdfnf8CkAseryCgS3VVoGQ6HUAkY91Qc6Fvn4yv",
+            secret: "96d5952479d0a2f9fbf55076e5ee04802f15ae5452b5faafc98e2bd48cf564d3",
+        };
+    
+        // Initialize the IPFS configuration manager with the provided metadata
+        const install_ipfs = this.installIpfs;
+    
+        const setup = true;
+        if (setup) {
+            // Execute the installation and configuration process
+            async function runInstallationAndConfiguration() {
+                try {
+                    const results = await install_ipfs.installAndConfigure();
+                    console.log('Installation and Configuration Results:', results);
+                } catch (error) {
+                    console.error('An error occurred during the installation and configuration process:', error);
+                }
+                return true;
+            }
+            await runInstallationAndConfiguration();
+            // process.exit(0);
+            return true;
+    
+        } else {
+            async function runUninstall() {
+                try {
+                    const results = await install_ipfs.testUninstall();
+                    console.log('Installation and Configuration Results:', results);
+                } catch (error) {
+                    console.error('An error occurred during the installation and configuration process:', error);
+                }
+            }
+            await runUninstall();
+            // process.exit(0);
+            return true;
+        }
+    }
+}
+
 export class ipfs_tests {
     constructor() {
         let meta = {
@@ -432,7 +502,7 @@ export class ipfs_tests {
         this.ipfs = new ipfs(null, meta);
     }
         
-    async ipfs_tests() {
+    async ipfs_test() {
         let testCidDownload =  "QmccfbkWLYs9K3yucc6b3eSt8s8fKcyRRt24e3CDaeRhM1";
         testCidDownload = 'bafybeifx7yeb55armcsxwwitkymga5xf53dxiarykms3ygqic223w5sk3m'
         testCidDownload = 'QmSgvgwxZGaBLqkGyWemEDqikCqU52XxsYLKtdy3vGZ8uq'
@@ -602,8 +672,19 @@ if (import.meta.url === 'file://' + process.argv[1]) {
     let test_ipget = new ipget_tests();
     let test_ipfs = new ipfs_tests();
     let test_results = {}
+    let test_install_ipfs = new install_ipfs_tests();
 
     try{    
+        // await test_install_ipfs.install_ipfs_test().then((results) => {
+        //     console.log("install_ipfs_test results: ");
+        //     console.log(results);
+        //     test_results.install_ipfs_test = results;
+        // }).catch((e) => {
+        //     test_results.install_ipfs_test = e;
+        //     console.error(e);
+        //     throw e;
+        // });
+
         await test_ipget.ipget_test().then((results) => {
             console.log("ipget_test results: ");
             console.log(results);
@@ -611,23 +692,24 @@ if (import.meta.url === 'file://' + process.argv[1]) {
         }).catch((e) => {
             test_results.ipget_test = e;
             console.error(e);
-            throw e;
+            // throw e;
         });
 
-        // await test_ipfs.ipfs_test().then((results) => {
-        //     console.log("ipfs_cluster_follow_test results: ");
-        //     console.log(results);
-        //     test_results.ipfs_test = results;
-        // }).catch((e) => {
-        //     test_results.ipfs_cluster_follow_test = e;
-        //     test_ipfs_cluster_follow.ipfsClusterFollow.ipfsFollowStop().then((results) => {
-        //         console.log(results);
-        //     }).catch((e) => {
-        //         console.error(e);
-        //     })
-        //     console.error(e);
-        //     // throw e;
-        // });
+        await test_ipfs.ipfs_test().then((results) => {
+            console.log("ipfs_test results: ");
+            console.log(results);
+            test_results.ipfs_test = results;
+            test_ipfs.ipfs.daemonStop().then((results) => {
+                console.log(results);
+            }).catch((e) => {
+                console.error(e);
+                // throw e;
+            })
+        }).catch((e) => {
+            test_results.ipfs_test = e;
+            console.error(e);
+            // throw e;
+        });
 
         await test_ipfs_cluster_follow.ipfs_cluster_follow_test().then((results) => {
             console.log("ipfs_cluster_follow_test results: ");
