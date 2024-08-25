@@ -75,17 +75,23 @@ export class IpfsClusterService {
             const results = exec(command, (error, stdout, stderr) => {
                 if (error) {
                     console.error(`error: ${error.message}`);
-                    return;
+                    return { "error": error.message };
                 }
                 if (stderr) {
                     console.error(`stderr: ${stderr}`);
-                    return;
+                    return { "stderr": stderr };
                 }
                 if (stdout) {
                     console.log(`stdout: ${stdout}`);
+                    return { "stdout": stdout };
                 }
             });
-            return results;
+
+            // wait for one second to check if the service is running
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            let stdout = results.stdout;
+            return stdout;
+            // return results;
         }
     }
 

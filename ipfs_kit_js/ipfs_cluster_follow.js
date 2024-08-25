@@ -42,7 +42,39 @@ export class IpfsClusterFollow {
     async ipfsFollowStart(clusterName = this.clusterName) {
         let results = { systemctl: false, bash: false };
         let detectResults
+
+        let psIpfsCmd = "ps -ef | grep ipfs | grep -v grep | grep -v systemctl";
+        let psIpfsCmdResults = execSync(psIpfsCmd).toString().trim(); 
         if (os.userInfo().uid === 0) {
+
+            if (psIpfsCmdResults.length === 0) {
+                try{
+                    // Attempt to start the ipfs service
+                    let systemctlStart = execSync("systemctl start ipfs").toString();
+                    results.systemctl = systemctlStart;
+                    // Check if the service is running
+                    detectResults = execSync("ps -ef | grep ipfs | grep -v grep").toString().trim();
+                    if (detectResults.length === 0) {
+                        const homeDir = os.homedir();
+                        const ipfsDir = path.join(homeDir, ".ipfs");
+                        // Check for and remove the api-socket file if it exists
+                        const apiSocketPath = path.join(ipfsDir, "api-socket");
+                        if (fs.existsSync(apiSocketPath)) {
+                            fs.unlinkSync(apiSocketPath);
+                            results.bash = true;
+                        }
+                        // Attempt to start the ipfs service
+                        let systemctlStart = execSync("systemctl start ipfs").toString();
+                        results.systemctl = systemctlStart;
+                        // Check if the service is running
+                        detectResults = execSync("ps -ef | grep ipfs | grep -v grep").toString().trim();
+                    }       
+                }
+                catch (error) {
+                    console.log(`Error starting ipfs: ${error.message}`);
+                    results.systemctl += `Error: ${error.message}`;
+                }
+            }
             try {
                 // Attempt to start the ipfs-cluster-follow service
                 let systemctlStart = execSync("systemctl start ipfs-cluster-follow").toString();
@@ -72,13 +104,41 @@ export class IpfsClusterFollow {
             }
         } 
         if (os.userInfo().uid != 0 || results.systemctl.includes('Error') || detectResults.length === 0) {
+            if (psIpfsCmdResults.length === 0) {  
+                try{
+                    // Attempt to start the ipfs service
+                    let ipfsStart = execSync(this.pathString + " ipfs daemon").toString();
+                    results.bash = ipfsStart;
+                    // Check if the service is running
+                    detectResults = execSync("ps -ef | grep ipfs | grep -v grep").toString().trim();
+                    if (detectResults.length === 0) {
+                        const homeDir = os.homedir();
+                        const ipfsDir = path.join(homeDir, ".ipfs");
+                        // Check for and remove the api-socket file if it exists
+                        const apiSocketPath = path.join(ipfsDir, "api-socket");
+                        if (fs.existsSync(apiSocketPath)) {
+                            fs.unlinkSync(apiSocketPath);
+                            results.bash = true;
+                        }
+                        // Attempt to start the ipfs service
+                        let ipfsStart = execSync(this.pathString + " ipfs daemon").toString();
+                        results.bash = ipfsStart;
+                        // Check if the service is running
+                        detectResults = execSync("ps -ef | grep ipfs | grep -v grep").toString().trim();
+                    }
+                }
+                catch (error) {
+                    console.log(`Error starting ipfs: ${error.message}`);
+                    results.bash = `Error: ${error.message}`;
+                }
+            }
             try {            
                 // Attempt to run the ipfs-cluster-follow command
                 const commandRun = this.pathString + ` ipfs-cluster-follow ${clusterName} run`;
                 const process = exec(commandRun, (error, stdout, stderr) => {
                     if (error) {
                         console.error(`Error running ipfs-cluster-follow: ${error}`);
-                        if (error.stdout.includes("command not found") || error.stdout.includes("This cluster peer has not been initialized.")) {
+                        if (error != undefined && (error.message.includes("command not found") || error.message.includes("This cluster peer has not been initialized."))) {
                             let InstallIpfs = new install_ipfs.InstallIpfs();
                             let installResults = InstallIpfs.installIpfsClusterFollow();
                             let configResults = InstallIpfs.configIpfsClusterFollow();
@@ -99,6 +159,9 @@ export class IpfsClusterFollow {
                                     results.bash = stdout;
                                 }
                             });
+                        }
+                        if (error != undefined && error.message.includes("connection refused")){
+                            throw new Error("connection refused");
                         }
                         return results;
                     }
