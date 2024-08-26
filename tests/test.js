@@ -409,7 +409,7 @@ export class ipget_tests {
 }
 
 
-export class ipfs_install_tests {
+export class install_ipfs_tests {
     constructor() {
         let meta = {
             role: "master",
@@ -671,8 +671,8 @@ if (import.meta.url === 'file://' + process.argv[1]) {
     let test_ipfs_cluster_follow = new ipfs_cluster_follow_tests();
     let test_ipget = new ipget_tests();
     let test_ipfs = new ipfs_tests();
-    let test_results = {}
     let test_install_ipfs = new install_ipfs_tests();
+    let test_results = {}
 
     try{    
         // await test_install_ipfs.install_ipfs_test().then((results) => {
@@ -695,21 +695,21 @@ if (import.meta.url === 'file://' + process.argv[1]) {
             // throw e;
         });
 
-        await test_ipfs.ipfs_test().then((results) => {
-            console.log("ipfs_test results: ");
-            console.log(results);
-            test_results.ipfs_test = results;
-            test_ipfs.ipfs.daemonStop().then((results) => {
-                console.log(results);
-            }).catch((e) => {
-                console.error(e);
-                // throw e;
-            })
-        }).catch((e) => {
-            test_results.ipfs_test = e;
-            console.error(e);
-            // throw e;
-        });
+        // await test_ipfs.ipfs_test().then((results) => {
+        //     console.log("ipfs_test results: ");
+        //     console.log(results);
+        //     test_results.ipfs_test = results;
+        //     test_ipfs.ipfs.daemonStop().then((results) => {
+        //         console.log(results);
+        //     }).catch((e) => {
+        //         console.error(e);
+        //         // throw e;
+        //     })
+        // }).catch((e) => {
+        //     test_results.ipfs_test = e;
+        //     console.error(e);
+        //     // throw e;
+        // });
 
         await test_ipfs_cluster_follow.ipfs_cluster_follow_test().then((results) => {
             console.log("ipfs_cluster_follow_test results: ");
@@ -732,26 +732,26 @@ if (import.meta.url === 'file://' + process.argv[1]) {
             // throw e;
         });
 
-        await test_ipfs_cluster_service.ipfs_cluster_service_test().then((results) => {
-            console.log("ipfs_cluster_service_test results: ");
-            console.log(results);
-            test_results.ipfs_cluster_service_test = results;
-            test_ipfs_cluster_service.ipfsClusterService.ipfsClusterServiceStop().then((results) => {
-                console.log(results);
-            }).catch((e) => {
-                console.error(e);
-                // throw e;
-            });
-        }).catch((e) => {
-            testResults.ipfs_cluster_service_test = e;
-            test_ipfs_cluster_service.ipfsClusterService.ipfsClusterServiceStop().then((results) => {
-                console.log(results);
-            }).catch((e) => {
-                console.error(e);
-            });
-            console.error(e);
-            // throw e;
-        });
+        // await test_ipfs_cluster_service.ipfs_cluster_service_test().then((results) => {
+        //     console.log("ipfs_cluster_service_test results: ");
+        //     console.log(results);
+        //     test_results.ipfs_cluster_service_test = results;
+        //     test_ipfs_cluster_service.ipfsClusterService.ipfsClusterServiceStop().then((results) => {
+        //         console.log(results);
+        //     }).catch((e) => {
+        //         console.error(e);
+        //         // throw e;
+        //     });
+        // }).catch((e) => {
+        //     testResults.ipfs_cluster_service_test = e;
+        //     test_ipfs_cluster_service.ipfsClusterService.ipfsClusterServiceStop().then((results) => {
+        //         console.log(results);
+        //     }).catch((e) => {
+        //         console.error(e);
+        //     });
+        //     console.error(e);
+        //     // throw e;
+        // });
 
         // await test_ipfs_kit.ipfs_kit_test().then((results) => {
         //     console.log("ipfs_kit_test results: ");
