@@ -105,7 +105,7 @@ export class ipfs {
         }
 
         let startDaemonSystemCtlResults = null;
-        let startDaemonCmdResults = false;
+        let startDaemonCmdResults = {};
         let ipfsReady = false;
 
         // Run this if root and check if it passes 
@@ -156,29 +156,36 @@ export class ipfs {
             if (ipfsReady === false) {
                 try {
                     const startDaemonCmd = `export IPFS_PATH=${path.resolve(path.join(this.ipfsPath))} &&  ` + this.pathString   + ` ipfs daemon --enable-gc --enable-pubsub-experiment`;
-                    //const execute2 = execSync(command2);
-                    const executeStartDaemonCmd = exec(startDaemonCmd, (error, stdout, stderr) => {
-                        if (error) {
-                            console.error(error);
-                            startDaemonCmdResults = error.message;
-                        }
-                        if (stdout) {
-                            startDaemonCmdResults = stdout;
-                        }
-                        if (stderr) {
-                            console.error(stderr);
-                            startDaemonCmdResults = stderr;
-                        }
+                    let stdout = ""
+                    let stderr = ""
+                    const executeStartDaemonCmd = exec(startDaemonCmd);
+                    executeStartDaemonCmd.stdout.on('data', (data) => { 
+                        stdout += data;
                     });
-                    // add a sleep here to wait for the daemon to start
-                    let milliseconds = 2000;
-                    let start = new Date().getTime();
-                    while (startDaemonCmdResults == false) {
-                        if ((new Date().getTime() - start) > milliseconds) {
-                            break;
-                        }
-                    }
-
+                    executeStartDaemonCmd.stderr.on('data', (data) => {
+                        stderr += data;
+                    });
+                    await new Promise(resolve => {
+                        executeStartDaemonCmd.on('close', () => {
+                            resolve();
+                        });
+                        executeStartDaemonCmd.stderr.on('data', (data) => {
+                            if(data.includes("Error")){
+                                console.error(data);
+                                startDaemonCmdResults.error = data;
+                                resolve();
+                            }
+                        });
+                        executeStartDaemonCmd.on('error', (error) => {
+                            console.error(error);
+                            startDaemonCmdResults = error;
+                            throw new Error(error);
+                            resolve();
+                        });
+                        setTimeout(resolve, 2000);
+                    });
+                    startDaemonCmdResults.stdout = stdout;
+                    startDaemonCmdResults.stderr = stderr;
                     return new Promise((resolve, reject) => {
                         const checkDaemonCmd = "ps -ef | grep ipfs | grep daemon | grep -v grep | wc -l";
                         exec(checkDaemonCmd, (error, stdout, stderr) => {
@@ -354,7 +361,7 @@ export class ipfs {
             try {
                 ipfsLsPinCmd = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs ls ${hash}`;
                 await new Promise((resolve, reject) => {
-                    exec(command, (error, stdout, stderr) => {
+                    exec(ipfsLsPinCmd, (error, stdout, stderr) => {
                         if (error) {
                             ipfsLsPinResults = error;
                             console.error(error);
