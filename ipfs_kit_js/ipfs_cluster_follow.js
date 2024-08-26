@@ -116,23 +116,21 @@ export class IpfsClusterFollow {
             if (psIpfsCmdResults.length === 0) {  
                 try{
                     // Attempt to start the ipfs service
-                    // let ipfsStart = execSync(this.pathString + " ipfs daemon").toString();
                     let ipfsStartCmd = this.pathString + " ipfs daemon";
-                    // let ipfsStart = exec(ipfsStartCmd, (error, stdout, stderr) => {
-                    //     if (error) {
-                    //         console.error(`Error starting ipfs: ${error.message}`);
-                    //         // results.bash = `Error: ${error.message}`;
-                    //     }
-                    //     if (stderr) {
-                    //         console.error(`Error starting ipfs: ${stderr}`);
-                    //         // results.bash = stderr;
-                    //     }
-                    //     if (stdout) {
-                    //         console.log(`ipfs output: ${stdout}`);
-                    //         // results.bash = stdout;
-                    //     }
-                    // });
-                    // results.bash = ipfsStart;
+                    let ipfsStartCmdResults = exec(ipfsStartCmd, (error, stdout, stderr) => {
+                        if (error) {
+                            console.error(`Error starting ipfs: ${error.message}`);
+                            // results.bash = `Error: ${error.message}`;
+                        }
+                        if (stderr) {
+                            console.error(`Error starting ipfs: ${stderr}`);
+                            // results.bash = stderr;
+                        }
+                        if (stdout) {
+                            console.log(`ipfs output: ${stdout}`);
+                            // results.bash = stdout;
+                        }
+                    });
                     // Check if the service is running
                     detectResults = execSync("ps -ef | grep ipfs | grep -v grep").toString().trim();
                     if (detectResults.length === 0) {
@@ -145,22 +143,21 @@ export class IpfsClusterFollow {
                             results.bash = true;
                         }
                         // Attempt to start the ipfs service
-                        // let ipfsStart = execSync(this.pathString + " ipfs daemon").toString();
                         let ipfsStartCmd = this.pathString + " ipfs daemon";
-                        // let ipfsStart = exec(ipfsStartCmd, (error, stdout, stderr) => {
-                        //     if (error) {
-                        //         console.error(`Error starting ipfs: ${error.message}`);
-                        //         // results.bash = `Error: ${error.message}`;
-                        //     }
-                        //     if (stderr) {
-                        //         console.error(`Error starting ipfs: ${stderr}`);
-                        //         // results.bash = stderr;
-                        //     }
-                        //     if (stdout) {
-                        //         console.log(`ipfs output: ${stdout}`);
-                        //         // results.bash = stdout;
-                        //     }
-                        // });
+                        let ipfsStart = exec(ipfsStartCmd, (error, stdout, stderr) => {
+                            if (error) {
+                                console.error(`Error starting ipfs: ${error.message}`);
+                                // results.bash = `Error: ${error.message}`;
+                            }
+                            if (stderr) {
+                                console.error(`Error starting ipfs: ${stderr}`);
+                                // results.bash = stderr;
+                            }
+                            if (stdout) {
+                                console.log(`ipfs output: ${stdout}`);
+                                // results.bash = stdout;
+                            }
+                        });
                         results.bash = ipfsStart.stdout.toString();
                         // Check if the service is running
                         detectResults = execSync("ps -ef | grep ipfs | grep -v grep").toString().trim();
@@ -174,22 +171,6 @@ export class IpfsClusterFollow {
             try {            
                 // Attempt to run the ipfs-cluster-follow command
                 const commandRun = this.pathString + ` ipfs-cluster-follow ${clusterName} run `;
-                // const commandProcess = exec(commandRun, (error, stdout , stderr) => {
-                //     if (error) {
-                //         console.error(`Error running ipfs-cluster-follow: ${error}`);
-                
-                //     }
-                //     if (stderr) {
-                //         console.error(`Error running ipfs-cluster-follow: ${stderr}`);
-                //         results.bash = stderr;
-                //         return results;
-                //     }
-                //     if (stdout) {
-                //         console.log(`ipfs-cluster-follow output: ${stdout}`);
-                //         results.bash = stdout;
-                //         return results;
-                //     }
-                // });
                 const commandProcess = exec(commandRun);
                 let stdout = '';
                 let stderr = '';
