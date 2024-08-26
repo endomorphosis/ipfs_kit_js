@@ -484,32 +484,52 @@ export class ipfs {
         return ipfsAddPinResults;
     }
 
-    async ipfsMkdir(srcPath, kwargs = {}) {
+
+
+    async ipfsMkDirBak(srcPath, kwargs = {}) {
         const thisPathSplit = srcPath.split("/");
         let thisPath = "";
         let ipfsMkdirResults = [];
-
+        let lsPath = [];
         return new Promise((resolve, reject) => {
             for (let i = 0; i < thisPathSplit.length; i++) {
                 try{
+                    ipfsMkdirResults[i] = {};
                     thisPath += thisPathSplit[i] + "/";
-                    const lsPath = this.ipfsLsPath(thisPath, kwargs).then((lsResults) => {
+                    lsPath[i] = this.ipfsLsPath(thisPath, kwargs).then((lsResults) => {
                         if(lsResults == false){
-                            const ipfsMkdirCmd = `export IPFS_PATH=${this.ipfsPath} &&  ` + this.pathString + ` ipfs files mkdir ${thisPath}`;
-                            exec(ipfsMkdirCmd, (error, stdout, stderr) => {
-                                if (error) {
-                                    console.error(error);
-                                    reject(error.message);
-                                }
-                                if (stderr) {
-                                    console.error(stderr);
-                                    reject(stderr);
-                                }
-                                if(stdout){
-                                    ipfsMkdirResults.push(stdout);
-                                    resolve(stdout);
-                                }
+                            const ipfsMkdirCmd = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs files mkdir ${thisPath}`;
+                            const ipfsMkdirCmdResults = exec(ipfsMkdirCmd);
+                            let stdout = ""
+                            let stderr = ""
+                            ipfsMkdirCmdResults.stdout.on('data', (data) => {
+                                stdout += data;
                             });
+                            ipfsMkdirCmdResults.stderr.on('data', (data) => {
+                                stderr += data;
+                            });
+                            new Promise(resolve => {
+                                ipfsMkdirCmdResults.on('close', () => {
+                                    resolve();
+                                });
+                                ipfsMkdirCmdResults.stderr.on('data', (data) => {
+                                    if(data.includes("Error")){
+                                        console.error(data);
+                                        ipfsMkdirResults.error = data;
+                                        throw new Error(data);
+                                        resolve();
+                                    }
+                                });
+                                ipfsMkdirCmdResults.on('error', (error) => {
+                                    console.error(error);
+                                    ipfsMkdirResults[i].error = error;
+                                    throw new Error(error);
+                                    resolve();
+                                });
+                                setTimeout(resolve, 2000);
+                            });
+                            ipfsMkdirResults[i].stdout = stdout;
+                            ipfsMkdirResults[i].stderr = stderr;
                         }
                     });
                 }
@@ -517,6 +537,67 @@ export class ipfs {
                     console.error(error);
                 }
             }
+            resolve(ipfsMkdirResults);
+        })
+    }
+
+
+    async ipfsMkDir(srcPath, kwargs = {}) {
+        const thisPathSplit = srcPath.split("/");
+        let thisPath = "";
+        let ipfsMkdirResults = [];
+        let lsPath = [];
+
+        for (let i = 0; i < thisPathSplit.length; i++) {
+            thisPath += thisPathSplit[i] + "/";
+            lsPath[i] = await this.ipfsLsPath(thisPath, kwargs)
+        }
+        thisPath = "";
+        return new Promise((resolve, reject) => {
+            for (let i = 0; i < thisPathSplit.length; i++) {
+                try{
+                    ipfsMkdirResults[i] = {};
+                    thisPath += thisPathSplit[i] + "/";
+                    if(lsPath[i] != false && lsPath[i].stderr != ''){
+                        const ipfsMkdirCmd = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs files mkdir ${thisPath}`;
+                        const ipfsMkdirCmdResults = exec(ipfsMkdirCmd);
+                        let stdout = ""
+                        let stderr = ""
+                        ipfsMkdirCmdResults.stdout.on('data', (data) => {
+                            stdout += data;
+                        });
+                        ipfsMkdirCmdResults.stderr.on('data', (data) => {
+                            stderr += data;
+                        });
+                        new Promise(resolve => {
+                            ipfsMkdirCmdResults.on('close', () => {
+                                resolve();
+                            });
+                            ipfsMkdirCmdResults.stderr.on('data', (data) => {
+                                if(data.includes("Error")){
+                                    console.error(data);
+                                    ipfsMkdirResults.error = data;
+                                    throw new Error(data);
+                                    resolve();
+                                }
+                            });
+                            ipfsMkdirCmdResults.on('error', (error) => {
+                                console.error(error);
+                                ipfsMkdirResults[i].error = error;
+                                throw new Error(error);
+                                resolve();
+                            });
+                            setTimeout(resolve, 2000);
+                        });
+                        ipfsMkdirResults[i].stdout = stdout;
+                        ipfsMkdirResults[i].stderr = stderr;
+                    }
+                }
+                catch (error) {
+                    console.error(error);
+                }
+            }
+            resolve(ipfsMkdirResults);
         })
     }
 
@@ -590,54 +671,73 @@ export class ipfs {
         let argstring = "";
         let ls_dir = srcPath;
         let ipfsAddPathCmd = "";
-        let ipfsAddPathResults = null;
+        let ipfsAddPathResults = {};
         if (!fs.existsSync(srcPath)) {
             throw new Error("path not found");
         }
         try{
             if (fs.lstatSync(srcPath).isFile()) {
-                await this.ipfsMkdir(path.dirname(srcPath), kwargs);
+                await this.ipfsMkDir(path.dirname(srcPath), kwargs);
             } else if (fs.lstatSync(srcPath).isDirectory()) {
-                await this.ipfsMkdir(srcPath, kwargs);
+                await this.ipfsMkDir(srcPath, kwargs);
             }
             argstring += `--recursive --to-files=${ls_dir} `;
-            ipfsAddPathCmd  = `ipfs add ${argstring}${ls_dir}`;
-            await new Promise((resolve, reject) => {
-                exec(ipfsAddPathCmd, (error, stdout, stderr) => {
-                    if (error) {
-                        ipfsAddPathResults = error;
-                        console.error(error);
-                        reject(error.message);
-                    }
-                    if (stderr) {
-                        ipfsAddPathResults = stderr;
-                        console.error(stderr);
-                        reject(stderr);
-                    }
-                    if (stdout) {
-                        ipfsAddPathResults = stdout;
-                        resolve(stdout);
+            ipfsAddPathCmd  = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs add ${argstring}${ls_dir}`;
+            let stdout = ""
+            let stderr = ""
+            let ipfsAddPathCmdResults = exec(ipfsAddPathCmd);
+
+            ipfsAddPathCmdResults.stdout.on('data', (data) => {
+                stdout += data;
+            });
+
+            ipfsAddPathCmdResults.stderr.on('data', (data) => {
+                stderr += data;
+            });
+
+            await new Promise(resolve => {
+                ipfsAddPathCmdResults.on('close', () => {
+                    resolve();
+                });
+                ipfsAddPathCmdResults.stderr.on('data', (data) => {
+                    if(data.includes("Error")){
+                        console.error(data);
+                        ipfsAddPathResults.error = data;
+                        if (data.includes("directory already has entry by that name") === false) {
+                            throw new Error(data);
+                            resolve();
+                        }
                     }
                 });
-            });    
+                ipfsAddPathCmdResults.on('error', (error) => {
+                    console.error(error);
+                    ipfsAddPathResults.error = error;
+                    throw new Error(error);
+                    resolve();
+                });
+                setTimeout(resolve, 2000);
+            });
+            ipfsAddPathResults.stdout = stdout;
+            ipfsAddPathResults.stderr = stderr;  
         }
         catch (error) {
             console.error(error);
         }
-        if (ipfsAddPathResults != null) {
+        if (ipfsAddPathResults.stdout != undefined) {
             let ipfsAddPathResultsParts = {};
-            let ipfsAddPathResultsSplitParts = {};
-            let ipfsAddPathResultsSplit = ipfsAddPathResults.split("\n");
+            let ipfsAddPathResultsSplit = ipfsAddPathResults.stdout.split("\n");
             for (let i = 0; i < ipfsAddPathResultsSplit.length; i++) {
-                ipfsAddPathResultsSplitParts = ipfsAddPathResultsSplit[i].split(" ");
+                let thisSplit = ipfsAddPathResultsSplit[i];
+                let ipfsAddPathResultsSplitParts = thisSplit.split(" ");
                 if (ipfsAddPathResultsSplitParts.length > 1) {
-                    ipfsAddPathResultsParts[parts[2]] = parts[1];
+                    ipfsAddPathResultsParts[ipfsAddPathResultsSplitParts[2]] = ipfsAddPathResultsSplitParts[1];
                 }
             }
-            return ipfsAddPathResultsParts;
+            ipfsAddPathResults.parts = ipfsAddPathResultsParts;
+            return ipfsAddPathResults;
         }
         else{
-            return false;
+            return ipfsAddPathResults;
         }
     }
 
@@ -697,7 +797,7 @@ export class ipfs {
             }
         } else if (stats["type"] === "directory") {
             const contents = await this.ipfsLsPath(path, kwargs);
-            for (let i = 0; i < contents.length; i++) {
+            for (let i = 0; i < contents.stdout.length; i++) {
                 if (contents[i].length > 0) {
                     ipfsRemovePinResults = await this.ipfsRemovePath(`${path}/${contents[i]}`, kwargs);
                 }
@@ -753,7 +853,7 @@ export class ipfs {
             }
         } catch (error) {
             console.error(error);
-            return false;
+            return error;
         }
     }
 
@@ -856,31 +956,45 @@ export class ipfs {
 
 
     async ipfsLsPath(srcPath, kwargs = {}) {
-        let ipfsLsPathResults = null;
+        let ipfsLsPathResults = {};
         let ipfsLsPathCmd = "";
+        ipfsLsPathCmd = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs files ls ${srcPath}`;
         try {
-            ipfsLsPathCmd = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs files ls ${srcPath}`;
-            await new Promise((resolve, reject) => {
-                exec(ipfsLsPathCmd, (error, stdout, stderr) => {
-                    if (error) {
-                        ipfsLsPathResults = error.message;
-                        reject(error.message);
-                    }
-                    if (stdout) {
-                        ipfsLsPathResults = stdout;
-                        resolve(stdout);
-                    }
-                    if (stderr) {
-                        ipfsLsPathResults = stderr;
-                        reject(stderr);
+            let ipfsLSPathCmdResults = exec(ipfsLsPathCmd);
+            let stdout = ""
+            let stderr = ""
+            ipfsLSPathCmdResults.stdout.on('data', (data) => {
+                stdout += data;
+            });
+            ipfsLSPathCmdResults.stderr.on('data', (data) => {
+                stderr += data;
+            });
+            await new Promise(resolve => {
+                ipfsLSPathCmdResults.on('close', () => {
+                    resolve();
+                });
+                ipfsLSPathCmdResults.stderr.on('data', (data) => {
+                    if(data.includes("Error")){
+                        console.error(data);
+                        ipfsLsPathResults.error = data;
+                        throw new Error(data);
+                        resolve();
                     }
                 });
+                ipfsLSPathCmdResults.on('error', (error) => {
+                    console.error(error);
+                    ipfsLsPathResults.error = error;
+                    throw new Error(error);
+                    resolve();
+                });
+                // setTimeout(resolve, 2000);
             });
-            ipfsLsPathResults = ipfsLsPathResults.split("\n");
+            ipfsLsPathResults.stdout = stdout;
+            ipfsLsPathResults.stderr = stderr;
         } catch (error) {
-            ipfsLsPathResults = error;
+            ipfsLsPathResults.error = error;
         }
-        if (ipfsLsPathResults != null && ipfsLsPathResults.length > 0 && Array.isArray(ipfsLsPathResults)) {
+        if (ipfsLsPathResults != null && ipfsLsPathResults.stdout.length > 0) {
             return ipfsLsPathResults;
         } else {
             return false;
