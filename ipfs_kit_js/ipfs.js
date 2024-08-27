@@ -356,30 +356,42 @@ export class ipfs {
     async ipfsLsPin(kwargs = {}) {
         if ('hash' in kwargs) {
             const hash = kwargs['hash'];
-            let ipfsLsPinResults = false;
+            let ipfsLsPinResults = {  };
             let ipfsLsPinCmd = "";
             try {
                 ipfsLsPinCmd = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs ls ${hash}`;
-                await new Promise((resolve, reject) => {
-                    exec(ipfsLsPinCmd, (error, stdout, stderr) => {
-                        if (error) {
-                            ipfsLsPinResults = error;
-                            console.error(error);
-                            reject(error);
-                        }
-                        if (stdout) {
-                            ipfsLsPinResults = stdout;
-                            resolve(stdout);
-                        }
-                        if (stderr) {
-                            ipfsLsPinResults = stderr;
-                            console.error(stderr);
-                            reject(stderr);
+                let ipfsLsPinCmdResults = exec(ipfsLsPinCmd);
+                let stdout = ""
+                let stderr = ""
+                ipfsLsPinCmdResults.stdout.on('data', (data) => {
+                    stdout += data;
+                });
+                ipfsLsPinCmdResults.stderr.on('data', (data) => {
+                    stderr += data;
+                });
+                await new Promise(resolve => {
+                    ipfsLsPinCmdResults.on('close', () => {
+                        resolve();
+                    });
+                    ipfsLsPinCmdResults.stderr.on('data', (data) => {
+                        if(data.includes("Error")){
+                            console.error(data);
+                            ipfsLsPinResults.error = data;
+                            resolve();
                         }
                     });
+                    ipfsLsPinCmdResults.on('error', (error) => {
+                        console.error(error);
+                        ipfsLsPinResults.error = error;
+                        resolve();
+                    });
+                    setTimeout(resolve, 2000);
                 });
+                ipfsLsPinResults.stdout = stdout;
+                ipfsLsPinResults.stderr = stderr;
             } catch (error) {
                 console.error(error);
+                ipfsLsPinResults.error = error;
             }
             if (ipfsLsPinResults != undefined) {
                 return ipfsLsPinResults;
@@ -389,8 +401,6 @@ export class ipfs {
             throw new Error("hash not found in kwargs");
         }
     }
-
-
 
     async ipfsCatPin(kwargs = {}) {
         if ('hash' in kwargs) {
@@ -743,11 +753,9 @@ export class ipfs {
 
 
     async ipfsRemovePath(srcPath, kwargs = {}) {
-        let result1 = null;
-        let result2 = null;
-        let ipfsRemovePathResults = null;
+        let ipfsRemovePathResults = {};
         let ipfsRemovePathCmd = "";
-        let ipfsRemovePinResults = null;
+        let ipfsRemovePinResults = {};
         let ipfsRemovePinCmd = "";
         const stats = await this.ipfsStatPath(srcPath, kwargs);
         if (Object.keys(stats).length === 0) {
@@ -757,42 +765,81 @@ export class ipfs {
         if (stats["type"] === "file") {
             try{
                 ipfsRemovePathCmd = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs files rm ${srcPath}`;
-                await new Promise((resolve, reject) => {
-                    exec(ipfsRemovePathCmd, (error, stdout, stderr) => {
-                        if (error) {
-                            let ipfsRemovePathResults = error.message;
-                            reject(error.message);
-                        }
-                        if (stdout) {
-                            ipfsRemovePathResults = stdout;
-                            resolve(stdout);
-                        }
-                        if (stderr) {
-                            ipfsRemovePathResults = stderr;
-                            reject(stderr);
+                let ipfsRemovePathCmdResults = exec(ipfsRemovePathCmd);
+                let stdout = ""
+                let stderr = ""
+                ipfsRemovePathCmdResults.stdout.on('data', (data) => {
+                    stdout += data;
+                });
+                ipfsRemovePathCmdResults.stderr.on('data', (data) => {
+                    stderr += data;
+                });
+                await new Promise(resolve => {
+                    ipfsRemovePathCmdResults.on('close', () => {
+                        resolve();
+                    });
+                    ipfsRemovePathCmdResults.stderr.on('data', (data) => {
+                        if(data.includes("Error")){
+                            console.error(data);
+                            ipfsRemovePathResults.error = data;
+                            resolve();
                         }
                     });
-                });
-                ipfsRemovePinCmd = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs pin rm ${pin}`;
-                await new Promise((resolve, reject) => {
-                    exec(ipfsRemovePinCmd, (error, stdout, stderr) => {
-                        if (error) {
-                            ipfsRemovePinResults = error;
-                            reject(error.message);
-                        }
-                        if (stdout) {
-                            ipfsRemovePinResults = stdout;
-                            resolve(stdout);
-                        }
-                        if (stderr) {
-                            ipfsRemovePinResults = stderr;
-                            reject(stderr);
-                        }
+                    ipfsRemovePathCmdResults.on('error', (error) => {
+                        console.error(error);
+                        ipfsRemovePathResults.error = error;
+                        resolve();
                     });
+                    setTimeout(resolve, 2000);
                 });
-                ipfsRemovePinResults = ipfsRemovePinResults.split("\n");    
+                ipfsRemovePathResults.stdout = stdout;
+                ipfsRemovePathResults.stderr = stderr;
             }
             catch (error) {
+                console.error(error);
+                ipfsRemovePathResults.error = error;
+            }
+            try{
+                ipfsRemovePinCmd = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs pin rm ${pin}`;
+                let ipfsRemovePinCmdResults = exec(ipfsRemovePinCmd);
+                let stdout = ""
+                let stderr = ""
+
+                ipfsRemovePinCmdResults.stdout.on('data', (data) => {
+                    stdout += data;
+                });
+                ipfsRemovePinCmdResults.stderr.on('data', (data) => {
+                    stderr += data;
+                });
+
+                await new Promise(resolve => {
+                    ipfsRemovePinCmdResults.on('close', () => {
+                        resolve();
+                    });
+
+                    ipfsRemovePinCmdResults.stderr.on('data', (data) => {
+                        if(data.includes("Error")){
+                            console.error(data);
+                            ipfsRemovePinResults.error = data;
+                            resolve();
+                        }
+                    });
+
+                    ipfsRemovePinCmdResults.on('error', (error) => {
+                        console.error(error);
+                        ipfsRemovePinResults.error = error;
+                        resolve();
+                    });
+
+                    setTimeout(resolve, 2000);
+                });
+
+                ipfsRemovePinResults.stdout = stdout.split("\n");
+                ipfsRemovePinResults.stderr = stderr;
+               
+            }
+            catch (error) {
+                ipfsRemovePinResults.error = error;
                 console.error(error);
             }
         } else if (stats["type"] === "directory") {
@@ -803,7 +850,8 @@ export class ipfs {
                 }
             }
         } else {
-            throw new Error("unknown path type");
+            console.error("unknown path type");
+            ipfsRemovePinResults.error = "unknown path type";
         }
         const results = {
             "filesRm": ipfsRemovePathResults,
@@ -814,26 +862,50 @@ export class ipfs {
 
     async ipfsStatPath(srcPath, kwargs = {}) {
         let ipfsStatsPathCmd = "";
-        let ipfsStatsPathResults = null;
+        let ipfsStatsPathResults = {};
         try {
             ipfsStatsPathCmd = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs files stat "${srcPath}"`;
-            await new Promise((resolve, reject) => {
-                exec(ipfsStatsPathCmd, (error, stdout, stderr) => {
-                    if (error) {
-                        ipfsStatsPathResults = error.message;
-                        reject(error.message);
-                    } 
-                    if (stdout) {
-                        ipfsStatsPathResults = stdout;
-                        resolve(stdout);
-                    }
-                    if (stderr) {
-                        ipfsStatsPathResults = stderr;
-                        reject(stderr);
+            let ipfsStatsPathCmdResults = exec(ipfsStatsPathCmd);
+            let stdout = ""
+            let stderr = ""
+
+            ipfsStatsPathCmdResults.stdout.on('data', (data) => {
+                stdout += data;
+            });
+
+            ipfsStatsPathCmdResults.stderr.on('data', (data) => {
+                stderr += data;
+            });
+
+            await new Promise(resolve => {
+                ipfsStatsPathCmdResults.on('close', () => {
+                    resolve();
+                });
+                ipfsStatsPathCmdResults.stderr.on('data', (data) => {
+                    if(data.includes("Error")){
+                        console.error(data);
+                        ipfsStatsPathResults.error = data;
+                        resolve();
                     }
                 });
+                ipfsStatsPathCmdResults.on('error', (error) => {
+                    console.error(error);
+                    ipfsStatsPathResults.error = error;
+                    resolve();
+                });
+                setTimeout(resolve, 2000);
             });
-            const resultsSplit = ipfsStatsPathResults.split("\n");
+
+            ipfsStatsPathResults.stderr = stderr;
+            ipfsStatsPathResults.stdout = stdout;
+
+        } catch (error) {
+            console.error(error);
+            ipfsStatsPathResults.error = error;
+        }
+
+        try {  
+            const resultsSplit = ipfsStatsPathResults.stdout.split("\n");
             if (resultsSplit.length > 0 && Array.isArray(resultsSplit)) {
                 const pin = resultsSplit[0];
                 const size = parseFloat(resultsSplit[1].split(": ")[1]);
@@ -847,51 +919,68 @@ export class ipfs {
                     "childBlocks": childBlocks,
                     "type": type
                 };
-                return results;
-            } else {
-                return false;
+                ipfsStatsPathResults.results = results;     
+            }
+            else{
+                ipfsStatsPathResults.results = {};
             }
         } catch (error) {
             console.error(error);
-            return error;
+            ipfsStatsPathResults.error = error;
         }
+        return ipfsStatsPathResults;
     }
-
 
     async ipfsNameResolve(srcPath, kwargs = {}) {
         if (typeof srcPath !== 'string') {
             throw new Error("srcPath must be a string");
         }
-
-
-        let ipfsNameResolveResults = null;
+        let ipfsNameResolveResults = {};
         let ipfsNamePublishCmd = "";
         try {
             ipfsNamePublishCmd = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString +  ` ipfs name resolve "${srcPath}"`;
-            await new Promise((resolve, reject) => {
-                exec(ipfsNamePublishCmd, (error, stdout, stderr) => {
-                    if (error) {
-                        ipfsNameResolveResults = error.message;
-                        reject(error.message);
-                    }
-                    if (stdout) {
-                        ipfsNameResolveResults = stdout;
-                        resolve(stdout);
-                    }
-                    if (stderr) {
-                        ipfsNameResolveResults = stderr;
-                        reject(stderr);
+            let ipfsNamePublishCmdResults = exec(ipfsNamePublishCmd);
+
+            let stdout = ""
+            let stderr = ""
+            
+            ipfsNamePublishCmdResults.stdout.on('data', (data) => {
+                stdout += data;
+            });
+            ipfsNamePublishCmdResults.stderr.on('data', (data) => {
+                stderr += data;
+            });
+
+            await new Promise(resolve => {
+                ipfsNamePublishCmdResults.on('close', () => {
+                    resolve();
+                });
+                ipfsNamePublishCmdResults.stderr.on('data', (data) => {
+                    if(data.includes("Error")){
+                        console.error(data);
+                        ipfsNameResolveResults.error = data;
+                        resolve();
                     }
                 });
+                ipfsNamePublishCmdResults.on('error', (error) => {
+                    console.error(error);
+                    ipfsNameResolveResults.error = error;
+                    resolve();
+                });
+                setTimeout(resolve, 2000);
             });
+
+            ipfsNameResolveResults.stdout = stdout;
+            ipfsNameResolveResults.stderr = stderr;
         } catch (error) {
             console.error(error);
+            ipfsNameResolveResults.error = error;
         }
-        return ipfsNamePublishCmd;
+        return ipfsNameResolveResults;
     }
 
     async ipfsNamePublish(srcIPNS, kwargs = {}) {
-        let ipfsNamePublishResults = null;
+        let ipfsNamePublishResults = {};
         let ipfsNamePublishCmd = "";
         let ipfsAddPinCmd = "";
         let ipfsAddPinResults = null;
@@ -977,17 +1066,15 @@ export class ipfs {
                     if(data.includes("Error")){
                         console.error(data);
                         ipfsLsPathResults.error = data;
-                        throw new Error(data);
                         resolve();
                     }
                 });
                 ipfsLSPathCmdResults.on('error', (error) => {
                     console.error(error);
                     ipfsLsPathResults.error = error;
-                    throw new Error(error);
                     resolve();
                 });
-                // setTimeout(resolve, 2000);
+                setTimeout(resolve, 2000);
             });
             ipfsLsPathResults.stdout = stdout;
             ipfsLsPathResults.stderr = stderr;
