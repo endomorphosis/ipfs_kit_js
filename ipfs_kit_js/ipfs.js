@@ -393,12 +393,16 @@ export class ipfs {
                 console.error(error);
                 ipfsLsPinResults.error = error;
             }
-            if (ipfsLsPinResults != undefined) {
-                return ipfsLsPinResults;
+            if (ipfsLsPinResults.stdout != '') {
+                ipfsLsPinResults.results = ipfsLsPinResults.stdout.split("\n");
+            }
+            else{
+                ipfsLsPinResults.results = ipfsLsPinResults.stderr
             }
         }
         else {
-            throw new Error("hash not found in kwargs");
+            console.error("hash not found in kwargs");
+            ipfsLsPinResults.error = "hash not found in kwargs";
         }
     }
 
@@ -490,6 +494,12 @@ export class ipfs {
         } catch (error) {
             console.error(error);
             ipfsAddPinResults = error;
+        }
+        if (ipfsAddPinResults.stdout != '') {
+            ipfsAddPinResults.results = ipfsAddPinResults.stdout.split("\n");
+        }
+        else{
+            ipfsAddPinResults.results = ipfsAddPinResults.stderr
         }
         return ipfsAddPinResults;
     }
@@ -741,12 +751,12 @@ export class ipfs {
                     ipfsAddPathResultsParts[ipfsAddPathResultsSplitParts[2]] = ipfsAddPathResultsSplitParts[1];
                 }
             }
-            ipfsAddPathResults.parts = ipfsAddPathResultsParts;
-            return ipfsAddPathResults;
+            ipfsAddPathResults.results = ipfsAddPathResultsParts;
         }
         else{
-            return ipfsAddPathResults;
+            ipfsAddPathResults.results = ipfsAddPathResults.stderr;
         }
+        return ipfsAddPathResults;
     }
 
 
