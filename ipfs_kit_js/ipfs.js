@@ -470,22 +470,22 @@ export class ipfs {
     async ipfsAddPin(pin, kwargs = {}) {
         const dirname = this.thisDir;
         let ipfsAddPinCmd = "";
-        let ipfsAddPinResults = null;
+        let ipfsAddPinResults = {};
         try {
             ipfsAddPinCmd = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs pin add ${pin}`;
             await new Promise((resolve, reject) => {
                 exec(ipfsAddPinCmd, (error, stdout, stderr) => {
                     if (error) {
-                        ipfsAddPinResults = error.message;
+                        ipfsAddPinResults.error = error.message;
                         console.error(error);
                         reject(error.message);
                     }
                     if (stdout) {
-                        ipfsAddPinResults = stdout;
+                        ipfsAddPinResults.stdout = stdout;
                         resolve(stdout);
                     }
                     if (stderr) {
-                        ipfsAddPinResults = stderr;
+                        ipfsAddPinResults.stderr = stderr;
                         console.error(stderr);
                         reject(stderr);
                     }
@@ -493,10 +493,10 @@ export class ipfs {
             });
         } catch (error) {
             console.error(error);
-            ipfsAddPinResults = error;
+            ipfsAddPinResults.error = error;
         }
         if (ipfsAddPinResults.stdout != '') {
-            ipfsAddPinResults.results = ipfsAddPinResults.stdout.split("\n");
+            ipfsAddPinResults.results = ipfsAddPinResults.stdout
         }
         else{
             ipfsAddPinResults.results = ipfsAddPinResults.stderr
@@ -809,6 +809,12 @@ export class ipfs {
                 console.error(error);
                 ipfsRemovePathResults.error = error;
             }
+            if (ipfsRemovePathResults.stdout != '') {
+                ipfsRemovePathResults.results = ipfsRemovePathResults.stdout.split("\n");
+            }
+            else{
+                ipfsRemovePathResults.results = ipfsRemovePathResults.stderr
+            }
             try{
                 ipfsRemovePinCmd = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs pin rm ${pin}`;
                 let ipfsRemovePinCmdResults = exec(ipfsRemovePinCmd);
@@ -852,12 +858,19 @@ export class ipfs {
                 ipfsRemovePinResults.error = error;
                 console.error(error);
             }
+            if (ipfsRemovePinResults.stdout != '') {
+                ipfsRemovePinResults.results = ipfsRemovePinResults.stdout;
+            }
+            else{
+                ipfsRemovePinResults.results = ipfsRemovePinResults.stderr;
+            }
         } else if (stats.results["type"] === "directory") {
             pin = stats.results['pin'];
             const contents = await this.ipfsLsPath(path, kwargs);
+            ipfsRemovePinResults.results = [];
             for (let i = 0; i < contents.stdout.length; i++) {
                 if (contents[i].length > 0) {
-                    ipfsRemovePinResults = await this.ipfsRemovePath(`${path}/${contents[i]}`, kwargs);
+                    ipfsRemovePinResults.results[i] = await this.ipfsRemovePath(`${path}/${contents[i]}`, kwargs);
                 }
             }
         } else {
@@ -986,6 +999,12 @@ export class ipfs {
         } catch (error) {
             console.error(error);
             ipfsNameResolveResults.error = error;
+        }
+        if (ipfsNameResolveResults.stdout != '') {
+            ipfsNameResolveResults.results = ipfsNameResolveResults.stdout.split("\n");
+        }
+        else{
+            ipfsNameResolveResults.results = ipfsNameResolveResults.stderr;
         }
         return ipfsNameResolveResults;
     }
@@ -1137,10 +1156,11 @@ export class ipfs {
             ipfsLsPathResults.error = error;
         }
         if (ipfsLsPathResults.stdout != '' && ipfsLsPathResults.stdout.length > 0) {
-            return ipfsLsPathResults.results = ipfsLsPathResults.stdout.split("\n");
+            ipfsLsPathResults.results = ipfsLsPathResults.stdout.split("\n");
         } else {
-            return ipfsLsPathResults.results = ipfsLsPathResults.stderr;
+            ipfsLsPathResults.results = ipfsLsPathResults.stderr;
         }
+        return ipfsLsPathResults;
     }
 
     async ipfsRemovePin(cid, kwargs = {}) {

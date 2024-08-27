@@ -489,6 +489,7 @@ export class ipfs_tests {
         this.thisDir = path.dirname(import.meta.url);
         this.path = process.env.PATH;
         this.path = this.path + ":" + path.join(this.thisDir, "bin")
+        this.path = this.path + ":" + path.join(path.dirname(this.thisDir), 'ipfs_kit_js', "bin")
         this.pathString = "PATH="+ this.path
         let localPath;
         if (os.userInfo().uid === 0) {
