@@ -7,7 +7,7 @@ import { ipget } from "../ipfs_kit_js/ipget.js";
 import { requireConfig } from "../config/config.js";
 import path from "path";
 import fs from "fs";
-import { execSync } from "child_process";
+import { exec, execSync } from "child_process";
 import { t } from "tar";
 
 export default class ipfs_kit_tests {
@@ -485,6 +485,8 @@ export class ipfs_tests {
             clusterLocation: "/ip4/167.99.96.231/tcp/9096/p2p/12D3KooWKw9XCkdfnf8CkAseryCgS3VVoGQ6HUAkY91Qc6Fvn4yv",
             secret: "96d5952479d0a2f9fbf55076e5ee04802f15ae5452b5faafc98e2bd48cf564d3",
         };
+        this.pathString = "PATH=" + process.env.PATH;
+        this.ipfsPath = "";
         this.thisDir = path.dirname(import.meta.url);
         if (this.thisDir.startsWith("file://")) {
             this.thisDir = this.thisDir.replace("file://", "");
@@ -582,21 +584,21 @@ export class ipfs_tests {
             console.error(error);
         }
 
-        let testRemovePath = null;
-        try {
-            testRemovePath = await this.ipfs.ipfsRemovePath(thisScriptName);
-            console.log(testRemovePath);
-        } catch (error) {
-            testRemovePath = error;
-            console.error(error);
-        }
-
         let testStatPath = null;
         try {
             testStatPath = await this.ipfs.ipfsStatPath(thisScriptName);
             console.log(testStatPath);
         } catch (error) {
             testStatPath = error;
+            console.error(error);
+        }
+
+        let testRemovePath = null;
+        try {
+            testRemovePath = await this.ipfs.ipfsRemovePath(thisScriptName);
+            console.log(testRemovePath);
+        } catch (error) {
+            testRemovePath = error;
             console.error(error);
         }
 
