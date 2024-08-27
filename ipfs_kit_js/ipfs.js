@@ -587,14 +587,12 @@ export class ipfs {
                                 if(data.includes("Error")){
                                     console.error(data);
                                     ipfsMkdirResults.error = data;
-                                    throw new Error(data);
                                     resolve();
                                 }
                             });
                             ipfsMkdirCmdResults.on('error', (error) => {
                                 console.error(error);
                                 ipfsMkdirResults[i].error = error;
-                                throw new Error(error);
                                 resolve();
                             });
                             setTimeout(resolve, 2000);
@@ -988,7 +986,7 @@ export class ipfs {
         let ipfsAddPinCmd = "";
         let ipfsAddPinResults = {};
         try {
-            ipfsAddPinCmd = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs add --cid-version 1 ${srcPath}`;
+            ipfsAddPinCmd = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs add --cid-version 1 ${srcIPNS}`;
             let ipfsAddPinCmdResults = exec(ipfsAddPinCmd);
             let stdout = ""
             let stderr = ""
@@ -1039,7 +1037,7 @@ export class ipfs {
         }
 
         try {
-            ipfsNamePublishCmd = `export IPFS_PATH=${this.ipfsPath} &&  ` + this.pathString +  `  ipfs name publish ${Object.keys(ipfsAddPinResults)[0]}`;
+            ipfsNamePublishCmd = `export IPFS_PATH=${this.ipfsPath} &&  ` + this.pathString +  `  ipfs name publish ${Object.keys(ipfsAddPinResults.results)[0]}`;
             let ipfsNamePublishCmdResults = exec(ipfsNamePublishCmd);
             let stdout = ""
             let stderr = ""
@@ -1128,44 +1126,62 @@ export class ipfs {
         } catch (error) {
             ipfsLsPathResults.error = error;
         }
-        if (ipfsLsPathResults != null && ipfsLsPathResults.stdout.length > 0) {
-            return ipfsLsPathResults;
+        if (ipfsLsPathResults.stdout != '' && ipfsLsPathResults.stdout.length > 0) {
+            return ipfsLsPathResults.results = ipfsLsPathResults.stdout.split("\n");
         } else {
-            return false;
+            return ipfsLsPathResults.results = ipfsLsPathResults.stderr;
         }
     }
 
     async ipfsRemovePin(cid, kwargs = {}) {
-        let ipfsRemovePinResults = null;
+        let ipfsRemovePinResults = {};
         let ipfsRemovePinCmd = "";
-        let result1 = null;
-        let stdout = null;
-        let stderr = null;
         try {
             ipfsRemovePinCmd = `export IPFS_PATH=${this.ipfsPath} &&  ` + this.pathString + `  ipfs pin rm ${cid}`;
-            ipfsRemovePinResults = await new Promise((resolve, reject) => {
-                exec(ipfsRemovePinCmd, (error, stdout, stderr) => {
-                    if (error) {
-                        ipfsRemovePinResults = error.message;
-                        reject(stderr);
-                    }
-                    if (stdout) {
-                        ipfsRemovePinResults = stdout;
-                        resolve(stdout);
-                    }
-                    if (stderr) {
-                        ipfsRemovePinResults = stderr;
-                        reject(stderr);
+            let ipfsRemovePinCmdResults = exec(ipfsRemovePinCmd);
+            let stdout = ""
+            let stderr = ""
+            ipfsRemovePinCmdResults.stdout.on('data', (data) => {
+                stdout += data;
+            });
+
+            ipfsRemovePinCmdResults.stderr.on('data', (data) => {
+                stderr += data;
+            });
+
+            await new Promise(resolve => {
+                ipfsRemovePinCmdResults.on('close', () => {
+                    resolve();
+                });
+
+                ipfsRemovePinCmdResults.stderr.on('data', (data) => {
+                    if(data.includes("Error")){
+                        console.error(data);
+                        ipfsRemovePinResults.error = data;
+                        resolve();
                     }
                 });
+
+                ipfsRemovePinCmdResults.on('error', (error) => {
+                    console.error(error);
+                    ipfsRemovePinResults.error = error;
+                    resolve();
+                });
+                setTimeout(resolve, 2000);
             });
+
+            ipfsRemovePinResults.stdout = stdout;
+            ipfsRemovePinResults.stderr = stderr;
         } catch (error) {
-            ipfsRemovePinResults = error;
+            console.error(error);
+            ipfsRemovePinResults.error = error;
         }
-        if (ipfsRemovePinResults  && ipfsRemovePinResults.includes("unpinned")) {
-            ipfsRemovePinResults = true;
+        if (ipfsRemovePinResults.stdout != ''  && ipfsRemovePinResults.stdout.includes("unpinned")) {
+            ipfsRemovePinResults.results = ipfsRemovePinResults.stdout
         }
-        return ipfsRemovePinResults;
+        else{
+            ipfsRemovePinResults.results = ipfsRemovePinResults.stderr;
+        }
     }
 
     async ipfsExecute(command, kwargs = {}) {

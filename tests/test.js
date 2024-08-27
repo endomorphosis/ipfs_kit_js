@@ -7,6 +7,7 @@ import { ipget } from "../ipfs_kit_js/ipget.js";
 import { requireConfig } from "../config/config.js";
 import path from "path";
 import fs from "fs";
+import os from "os";
 import { exec, execSync } from "child_process";
 import { t } from "tar";
 
@@ -485,9 +486,17 @@ export class ipfs_tests {
             clusterLocation: "/ip4/167.99.96.231/tcp/9096/p2p/12D3KooWKw9XCkdfnf8CkAseryCgS3VVoGQ6HUAkY91Qc6Fvn4yv",
             secret: "96d5952479d0a2f9fbf55076e5ee04802f15ae5452b5faafc98e2bd48cf564d3",
         };
-        this.pathString = "PATH=" + process.env.PATH;
-        this.ipfsPath = "";
         this.thisDir = path.dirname(import.meta.url);
+        this.path = process.env.PATH;
+        this.path = this.path + ":" + path.join(this.thisDir, "bin")
+        this.pathString = "PATH="+ this.path
+        let localPath;
+        if (os.userInfo().uid === 0) {
+            localPath = '/cloudkit_storage/';
+        } else {
+            localPath = path.join(os.homedir(), '.cache');
+        }
+        this.localPath = localPath
         if (this.thisDir.startsWith("file://")) {
             this.thisDir = this.thisDir.replace("file://", "");
         }
