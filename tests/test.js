@@ -165,12 +165,12 @@ export default class ipfs_kit_tests {
             console.error(e);
         }
 
-        // try {
-        //     test_ipfs_get_pinset = await this.ipfsKitJs.ipfsGetPinset();
-        // } catch (e) {
-        //     test_ipfs_get_pinset = e;
-        //     console.error(e);
-        // }
+        try {
+            test_ipfs_get_pinset = await this.ipfsKitJs.ipfsGetPinset();
+        } catch (e) {
+            test_ipfs_get_pinset = e;
+            console.error(e);
+        }
 
         try {
             test_ipfs_add_pin = await this.ipfsKitJs.ipfsAddPin(testCidDownload);
