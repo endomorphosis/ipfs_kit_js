@@ -638,10 +638,10 @@ export class ipfs {
         }
         if (!fs.existsSync(newConfig)) {
             throw new Error("newConfig file not found");
-        }
+        }S
         const command = this.pathString + ` IPFS_PATH=${this.ipfsPath}` + " ipfs config replace " + newConfig;
         try {
-            const { stdout } = await execProm(command);
+            const stdout =  execSync(command);
             this.ipfs_config = JSON.parse(stdout);
             return this.ipfs_config;
         } catch (error) {
@@ -658,8 +658,8 @@ export class ipfs {
 
         const command = this.pathString + ` IPFS_PATH=${this.ipfsPath}` + ` ipfs config ${key}`;
         try {
-            const stdout = await execProm(command);
-            return stdout.trim();
+            const stdout = execSync(command);
+            return stdout.toString().trim();
         } catch (error) {
             console.error("command failed", command, error);
             throw new Error("command failed");
@@ -677,8 +677,8 @@ export class ipfs {
 
         const command = this.pathString + ` IPFS_PATH=${this.ipfsPath}` + ` ipfs config ${key} ${value}`;
         try {
-            const stdout  = await execProm(command);
-            return stdout;
+            const stdout  = execSync(command);
+            return stdout.toString().trim();
         } catch (error) {
             console.error("command failed", command, error);
             throw new Error("command failed");
