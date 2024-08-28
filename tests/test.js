@@ -218,7 +218,17 @@ export default class ipfs_kit_tests {
             test_ipfs_remove_pin: test_ipfs_remove_pin,
             test_ipget_download_object: test_ipget_download_object,
             test_ipfs_upload_object: test_ipfs_upload_object,
-            test_load_collection: test_load_collection
+            test_load_collection: test_load_collection,
+            test_ipfs_add_path: test_ipfs_add_path,
+            test_ipfs_remove_path: test_ipfs_remove_path,
+            test_ipfs_ls_path: test_ipfs_ls_path,
+            test_ipfs_get_config: test_ipfs_get_config,
+            test_ipfs_set_config: test_ipfs_set_config,
+            test_ipfs_name_publish: test_ipfs_name_publish,
+            test_ipfs_name_resolve: test_ipfs_name_resolve,
+            test_ipfs_get_config_value: test_ipfs_get_config_value,
+            test_ipfs_set_config_value: test_ipfs_set_config_value,
+            test_update_collection_ipfs: test_update_collection_ipfs
         };
 
         return results;
