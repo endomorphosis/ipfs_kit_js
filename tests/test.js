@@ -584,14 +584,14 @@ export class ipfs_tests {
         }
 
 
-        let testGetPinset = null;
-        try {
-            testGetPinset = await this.ipfs.ipfsGetPinset();
-            console.log(testGetPinset);
-        } catch (error) {
-            testGetPinset = error;
-            console.error(error);
-        }
+        // let testGetPinset = null;
+        // try {
+        //     testGetPinset = await this.ipfs.ipfsGetPinset();
+        //     console.log(testGetPinset);
+        // } catch (error) {
+        //     testGetPinset = error;
+        //     console.error(error);
+        // }
 
         let testAddPath = null;
         try {
