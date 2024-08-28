@@ -335,10 +335,15 @@ export class ipfsKitJs {
 
     async ipfsRemovePath(path, kwargs = {}) {
         let ipfsClusterCtlRemovePathResults = null;
+        let cids = [];
         let ipfsRemovePathResults = null;
         if (this.role === "master") {
             ipfsRemovePathResults = await this.ipfs.ipfsRemovePath(path, kwargs);
-            ipfsClusterCtlRemovePathResults = await this.ipfsClusterCtl.ipfsClusterCtlRemovePath(path, kwargs);
+            console.log(ipfsRemovePathResults);
+            for (var i = 0; i < ipfsRemovePathResults.pinRm.results.length; i++) {
+                cids.push(ipfsRemovePathResults.pinRm.results[i].split(" ")[1]);
+            }
+            ipfsClusterCtlRemovePathResults = await this.ipfsClusterCtl.ipfsClusterCtlRemovePath(path, cids);
         } else if (this.role === "worker" || this.role === "leecher") {
             ipfsRemovePathResults = await this.ipfs.ipfsRemovePath(path, kwargs);
         }

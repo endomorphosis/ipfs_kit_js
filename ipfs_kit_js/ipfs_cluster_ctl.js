@@ -117,7 +117,7 @@ export default class IpfsClusterCtl {
         return results.filter(result => result !== null);
     }
 
-    async ipfsClusterCtlRemovePath(dirPath) {
+    async ipfsClusterCtlRemovePath(dirPath, metadata = {}) {
         if (!dirPath) {
             throw new Error("Path not found");
         }
@@ -127,8 +127,28 @@ export default class IpfsClusterCtl {
         } else {
             files = [dirPath];
         }
+        let cids = {};
+        if (metadata.length > 0) {
+            for (let i = 0; i < files.length; i++) {
+                let file = files[i];
+                let cid = metadata[i];
+                cids[file] = cid;
+            }
+        }
+        else {
+            for (let i = 0; i < files.length; i++) {
+                let ipfsRmPathCmd = this.pathString + ` ipfs files rm ${files[i]}`;
+                try {
+                    const ipfsRmPathCmdResults = execSync(ipfsRmPathCmd).toString();
+                    cids[files[i]] = ipfsRmPathCmdResults;
+                } catch (error) {
+                    console.error(`Failed to execute command for file ${files[i]}: ${error}`);
+                    cids[files[i]] = error;
+                }
+            }
+        }
         const results = files.map(file => { 
-            let command = this.pathString + ` ipfs-cluster-ctl pin rm ${file}`;
+            let command = this.pathString + ` ipfs-cluster-ctl pin rm ${cids[file]}`;
             try {
                 const output = execSync(command).toString();
                 return `Unpinned: ${file}`;

@@ -88,19 +88,24 @@ export class ipget {
                 if (signal) {
                     reject(new Error("Command timed out"));
                 } else {
-                    const stats = fs.statSync(dstPath);
-                    const metadata = {
-                        "cid": cid,
-                        "path": dstPath,
-                        "mtime": stats.mtimeMs,
-                        "filesize": stats.size
-                    };
-                    resolve(metadata);
+                    if (fs.existsSync(dstPath)) {
+                        const stats = fs.statSync(dstPath);
+                        const metadata = {
+                            "cid": cid,
+                            "path": dstPath,
+                            "mtime": stats.mtimeMs,
+                            "filesize": stats.size
+                        };
+                        resolve(metadata);
+                    }
+                    else {
+                        reject(new Error("File not found"));
+                    }
                 }
             });
 
             setTimeout(() => {
-                process.kill();
+                reject(new Error("Command timed out"));
             }, timeout);
         });
     }

@@ -850,7 +850,7 @@ export class ipfs {
                     setTimeout(resolve, 2000);
                 });
 
-                ipfsRemovePinResults.stdout = stdout.split("\n");
+                ipfsRemovePinResults.stdout = stdout.trim().split("\n");
                 ipfsRemovePinResults.stderr = stderr;
                
             }
