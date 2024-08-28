@@ -625,6 +625,7 @@ export class ipfsKitJs {
 
         return status;
     }
+
     async ipfsUploadObject(file) {
         if (!file) {
             throw new Error("file is not defined");
@@ -635,9 +636,10 @@ export class ipfsKitJs {
         let thisFileDirname = path.dirname(thisFile);
         let thisFileStat = fs.statSync(thisFile);
         let ipfsUploadObjectResults = null;
+        let ipfsNamePublishResults = null;
         try {
-            thisFileStat = this.ipfs.ipfsAddPath(thisFile);
-            ipfsUploadObjectResults = this.ipfs.ipfsNamePublish(thisFile);
+            ipfsUploadObjectResults = await this.ipfs.ipfsAddPath(thisFile);
+            ipfsNamePublishResults = await this.ipfs.ipfsNamePublish(thisFile);
         }
         catch (e) {
             ipfsUploadObjectResults = e;
@@ -659,7 +661,7 @@ export class ipfsKitJs {
         let dstPath = thisPath || kwargs.path;
         let ipgetDownloadObjectResults = null;
         try {
-            ipgetDownloadObjectResults = this.ipget.ipgetDownloadObject(cid, dstPath, kwargs);
+            ipgetDownloadObjectResults = await this.ipget.ipgetDownloadObject(cid, dstPath, kwargs);
         } catch (e) {
             ipgetDownloadObjectResults = e;
             console.error(e);

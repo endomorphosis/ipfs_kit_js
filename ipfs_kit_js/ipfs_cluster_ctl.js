@@ -189,7 +189,7 @@ export default class IpfsClusterCtl {
         let ipfsClusterCtlRemovePinCmd = this.pathString + ` ipfs-cluster-ctl pin rm ${pin}`;
         try {
             const ipfsClusterCtlRemovePinCmdResults = execSync(ipfsClusterCtlRemovePinCmd).toString();
-            ipfsClusterCtlRemovePinResults.results = ipfsClusterCtlRemovePinCmdResults;
+            ipfsClusterCtlRemovePinResults.results = ipfsClusterCtlRemovePinCmdResults.trim();
         } catch (error) {
             console.error(error);
             ipfsClusterCtlRemovePinResults.error = error;
