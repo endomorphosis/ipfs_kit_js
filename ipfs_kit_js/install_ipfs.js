@@ -747,10 +747,11 @@ export class installIpfs {
 
                 // Note: The following commands are synchronous and may block the event loop
                 // Consider using child_process.exec or child_process.spawn for async execution
-
-                let ipfsInitCommand = `IPFS_PATH=${this.ipfsPath} `+ this.pathString + ` ipfs init --profile=badgerds`;
-                let ipfsInitResults = execSync(ipfsInitCommand).toString().trim();
-
+                let ipfsInitResults 
+                if (!fs.existsSync(path.join(this.ipfsPath, "config"))) { 
+                    let ipfsInitCommand = `IPFS_PATH=${this.ipfsPath} `+ this.pathString + ` ipfs init --profile=badgerds`;
+                    ipfsInitResults = execSync(ipfsInitCommand).toString().trim();
+                }
                 let peerIdcommand = `IPFS_PATH=${this.ipfsPath} ` + this.pathString + ` ipfs id`;
                 let peerIdResults = execSync(peerIdcommand).toString();
                 peerId = JSON.parse(peerIdResults);
