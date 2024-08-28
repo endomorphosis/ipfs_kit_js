@@ -70,11 +70,10 @@ export default class IpfsClusterCtl {
                 cid = metadata[filename];
             }
             else {
-                let ipfsAddPin = this.pathString + ` ipfs-cluster-ctl add ${file}`;
+                let ipfsAddPathCmd = this.pathString + ` ipfs add ${file}`;
                 try {
-                    const output = execSync(ipfsAddPin).toString();
-                    const lines = output.split("\n");
-                    cid = lines[lines.length - 2].split(" ")[1];
+                    const ipfsAddPathCmdResults = execSync(ipfsAddPathCmd).toString();
+                    cid = ipfsAddPathCmdResults.split(" ")[1];
                 } catch (error) {
                     console.error(`Failed to execute command for file ${file}: ${error}`);
                     return null;

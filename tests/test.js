@@ -232,9 +232,7 @@ export default class ipfs_kit_tests {
         };
 
         return results;
-
     }
-
 }
 
 export class ipfs_cluster_service_tests {
