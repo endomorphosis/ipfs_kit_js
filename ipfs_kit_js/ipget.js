@@ -76,9 +76,6 @@ export class ipget {
         if (!fs.existsSync(path.dirname(dstPath))) {
             fs.mkdirSync(path.dirname(dstPath), { recursive: true });
         }
-        if (!fs.existsSync(dstPath)) {
-            fs.mkdirSync(dstPath);
-        }
         
         const command = `export IPFS_PATH=${this.ipfsPath} && ` + this.pathString + ` ipfs get ${cid} -o ${dstPath}`;
         const process = exec(command);

@@ -249,7 +249,7 @@ export class ipfsKitJs {
 
         let ipget;
         try {
-            ipget = await this.ipget.ipgetDownloadObject({ cid: pin, path: dstPath });
+            ipget = await this.ipget.ipgetDownloadObject(pin, dstPath);
         } catch (e) {
             ipget = e.toString();
             console.error(e);
@@ -275,7 +275,8 @@ export class ipfsKitJs {
         let ipfsClusterCtlAddPathResult = null;
         if (this.role === "master") {
             ipfsAddPathResult = await this.ipfs.ipfsAddPath(path, kwargs);
-            ipfsClusterCtlAddPathResult = await this.ipfsClusterCtl.ipfsClusterCtlAddPath(path, kwargs);
+            let cids = ipfsAddPathResult.results
+            ipfsClusterCtlAddPathResult = await this.ipfsClusterCtl.ipfsClusterCtlAddPath(path, cids);
         } else if (this.role === "worker" || this.role === "leecher") {
             ipfsAddPathResult = await this.ipfs.ipfsAddPath(path, kwargs);
         }
@@ -290,8 +291,8 @@ export class ipfsKitJs {
         let ipfsLsPathResults = null
         try{
             ipfsLsPathResults = await this.ipfs.ipfsLsPath(path, kwargs);
-            if (ipfsLsPathResults !== null && typeof ipfsLsPathResults === 'object') {
-                ipfsLsPathResults = ipfsLsPathResults.filter(item => item !== "");   
+            if (ipfsLsPathResults.results !== null && typeof ipfsLsPathResults.results === 'object') {
+                ipfsLsPathResults.results = ipfsLsPathResults.results.filter(item => item !== "");   
             }
         }
         catch(e){
@@ -336,9 +337,8 @@ export class ipfsKitJs {
         let ipfsClusterCtlRemovePathResults = null;
         let ipfsRemovePathResults = null;
         if (this.role === "master") {
-            ipfsClusterCtlRemovePathResults = await this.ipfsClusterCtl.ipfsClusterCtlRemovePath(path, kwargs);
-            // ipfsClusterCtlRemovePathResults = await this.ipfsClusterCtl.ipfsClusterCtlRemovePath(path, kwargs);
             ipfsRemovePathResults = await this.ipfs.ipfsRemovePath(path, kwargs);
+            ipfsClusterCtlRemovePathResults = await this.ipfsClusterCtl.ipfsClusterCtlRemovePath(path, kwargs);
         } else if (this.role === "worker" || this.role === "leecher") {
             ipfsRemovePathResults = await this.ipfs.ipfsRemovePath(path, kwargs);
         }
