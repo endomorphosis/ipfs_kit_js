@@ -95,26 +95,45 @@ export default class IpfsClusterCtl {
         return ipfsClusterCtlAddPathResults;
     }
 
-    async ipfsClusterCtlAddPin(dirPath, metadata = {}) {
-        if (!fs.existsSync(dirPath)) {
-            throw new Error("Path not found");
+    async ipfsClusterCtlAddPin(pin, metadata = {}) {
+        let ipfsClusterCtlAddPinResults = {};
+        let files = [];
+        if (pin === null || pin === undefined) {
+            throw new Error("Pin not found");
         }
-        
-        const files = this.walkSync(dirPath);
-        const results = files.map(file => {
-            const relativePath = path.relative(dirPath, file);
-            let argString = metadata[relativePath] ? ` --metadata ${metadata[relativePath]}` : "";
-            let command = this.pathString + ` ipfs-cluster-ctl pin add ${file}${argString}`;
-            try {
-                const output = execSync(command).toString();
-                return output;
-            } catch (error) {
-                console.error(`Failed to execute command for file ${file}: ${error}`);
-                return null;
+        if (fs.existsSync(metadata.path)){
+            if (fs.statSync(metadata.path).isDirectory()) {
+                files = this.walkSync(metadata.path);
+            } else {
+                files = [metadata.path];
             }
-        });
+        }
+        if (files.length > 0) {
+            const results = files.map(file => {
+                const relativePath = path.relative(metadata.path, file);
+                let argString = metadata[relativePath] ? ` --metadata ${metadata[relativePath]}` : "";
+                let ipfsClusterCtlAddPinCmd = this.pathString + ` ipfs-cluster-ctl pin add ${pin}`;
+                try {
+                    const ipfsClusterCtlAddPinCmdResults = execSync(ipfsClusterCtlAddPinCmd).toString();
+                    ipfsClusterCtlAddPinResults[file] = ipfsClusterCtlAddPinCmdResults;
+                } catch (error) {
+                    console.error(`Failed to execute command for file ${file}: ${error}`);
+                    ipfsClusterCtlAddPinResults[file] = error;
+                }
+            });
+        }
+        else {
+            let ipfsClusterCtlAddPinCmd = this.pathString + ` ipfs-cluster-ctl pin add ${pin}`;
+            try {
+                const ipfsClusterCtlAddPinCmdResults = execSync(ipfsClusterCtlAddPinCmd).toString();
+                ipfsClusterCtlAddPinResults = ipfsClusterCtlAddPinCmdResults;
+            } catch (error) {
+                console.error(`Failed to execute command for pin ${pin}: ${error}`);
+                ipfsClusterCtlAddPinResults = error;
+            }
+        }
 
-        return results.filter(result => result !== null);
+        return ipfsClusterCtlAddPinResults;
     }
 
     async ipfsClusterCtlRemovePath(dirPath, metadata = {}) {

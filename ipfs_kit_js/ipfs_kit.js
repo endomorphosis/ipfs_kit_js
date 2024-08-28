@@ -258,15 +258,16 @@ export class ipfsKitJs {
         let ipfsAddPinResult = null;
         let ipfsClusterCtlAddPinResult = null;
         if (this.role === "master") {
-            ipfsClusterCtlAddPinResult = await this.ipfsClusterCtl.ipfsClusterCtlAddPin(dstPath, kwargs);
             ipfsAddPinResult = await this.ipfs.ipfsAddPin(pin, kwargs);
+            ipfsClusterCtlAddPinResult = await this.ipfsClusterCtl.ipfsClusterCtlAddPin(pin, ipget);
         } else if (this.role === "worker" || this.role === "leecher") {
             ipfsAddPinResult = await this.ipfs.ipfsAddPin(pin, kwargs);
         }
 
         return {
             ipfsClusterCtlAddPin: ipfsClusterCtlAddPinResult,
-            ipfsAddPin: ipfsAddPinResult
+            ipfsAddPin: ipfsAddPinResult,
+            ipget: ipget
         };
     }
 
