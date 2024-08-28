@@ -178,29 +178,24 @@ export default class IpfsClusterCtl {
         });
 
         return results;
-    }
+    }n
 
-    async ipfsClusterCtlRemovePin(dirPath) {
-
-        throw new Error("Method not implemented.");
-
-        if (!dirPath) {
-            throw new Error("Path not found");
+    async ipfsClusterCtlRemovePin(pin, metadata = {}) {
+        let  ipfsClusterCtlRemovePinResults = {};
+        if (!pin) {
+            throw new Error("Pin not found");
         }
 
-        const files = this.walkSync(dirPath);
-        const results = files.map(file => {
-            let command = this.pathString + ` ipfs-cluster-ctl pin rm ${file}`;
-            try {
-                const output = execSync(command).toString();
-                return `Unpinned: ${file}`;
-            } catch (error) {
-                console.error(`Failed to execute command for file ${file}: ${error}`);
-                return `Failed to unpin: ${file}`;
-            }
-        });
+        let ipfsClusterCtlRemovePinCmd = this.pathString + ` ipfs-cluster-ctl pin rm ${pin}`;
+        try {
+            const ipfsClusterCtlRemovePinCmdResults = execSync(ipfsClusterCtlRemovePinCmd).toString();
+            ipfsClusterCtlRemovePinResults.results = ipfsClusterCtlRemovePinCmdResults;
+        } catch (error) {
+            console.error(error);
+            ipfsClusterCtlRemovePinResults.error = error;
+        }
 
-        return results;
+        return ipfsClusterCtlRemovePinResults;
     }
 
 

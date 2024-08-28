@@ -359,8 +359,8 @@ export class ipfsKitJs {
         let ipfsClusterRemovePinResults = null;
         let ipfsRemovePinResults = null;
         if (this.role === "master") {
-            ipfsClusterRemovePinResults = await this.ipfsClusterCtl.ipfsClusterCtlRemovePin(pin, kwargs);
             ipfsRemovePinResults = await this.ipfs.ipfsRemovePin(pin, kwargs);
+            ipfsClusterRemovePinResults = await this.ipfsClusterCtl.ipfsClusterCtlRemovePin(pin, kwargs);
         } else if (this.role === "worker" || this.role === "leecher") {
             ipfsRemovePinResults = await this.ipfs.ipfsRemovePin(pin, kwargs);
         }

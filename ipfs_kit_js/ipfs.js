@@ -659,7 +659,7 @@ export class ipfs {
         const command = this.pathString + ` IPFS_PATH=${this.ipfsPath}` + ` ipfs config ${key}`;
         try {
             const stdout = await execProm(command);
-            return stdout;
+            return stdout.trim();
         } catch (error) {
             console.error("command failed", command, error);
             throw new Error("command failed");
@@ -1001,7 +1001,7 @@ export class ipfs {
             ipfsNameResolveResults.error = error;
         }
         if (ipfsNameResolveResults.stdout != '') {
-            ipfsNameResolveResults.results = ipfsNameResolveResults.stdout.split("\n");
+            ipfsNameResolveResults.results = ipfsNameResolveResults.stdout.trim().split("\n");
         }
         else{
             ipfsNameResolveResults.results = ipfsNameResolveResults.stderr;
@@ -1212,6 +1212,7 @@ export class ipfs {
         else{
             ipfsRemovePinResults.results = ipfsRemovePinResults.stderr;
         }
+        return ipfsRemovePinResults;
     }
 
     async ipfsExecute(command, kwargs = {}) {
