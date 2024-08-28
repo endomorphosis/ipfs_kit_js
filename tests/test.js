@@ -150,18 +150,18 @@ export default class ipfs_kit_tests {
         }
 
         try {
-            test_ipfs_remove_path = await this.ipfsKitJs.ipfsRemovePath(thisScriptName);
-        }
-        catch (e) {
-            test_ipfs_remove_path = e;
-            console.error(e);
-        }
-
-        try {
             test_ipfs_ls_path = await this.ipfsKitJs.ipfsLsPath(thisScriptName);
         }
         catch (e) {
             test_ipfs_ls_path = e;
+            console.error(e);
+        }
+
+        try {
+            test_ipfs_remove_path = await this.ipfsKitJs.ipfsRemovePath(thisScriptName);
+        }
+        catch (e) {
+            test_ipfs_remove_path = e;
             console.error(e);
         }
 
