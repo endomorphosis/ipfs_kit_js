@@ -717,3 +717,5 @@ export class ipfsKitJs {
     }
 
 }
+
+export default ipfsKitJs;
