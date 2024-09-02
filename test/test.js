@@ -11,7 +11,7 @@ import os from "os";
 import { exec, execSync } from "child_process";
 import { t } from "tar";
 
-export default class ipfs_kit_tests {
+export class test_ipfs_kit_js {
     constructor() {
         let meta = {
             role: "master",
@@ -234,6 +234,8 @@ export default class ipfs_kit_tests {
         return results;
     }
 }
+
+export default test_ipfs_kit_js;
 
 export class ipfs_cluster_service_tests {
     constructor() {
@@ -693,7 +695,7 @@ export class ipfs_tests {
 }
 
 if (import.meta.url === 'file://' + process.argv[1]) {
-    let test_ipfs_kit = new ipfs_kit_tests();
+    let test_ipfs_kit = new test_ipfs_kit_js();
     let test_ipfs_cluster_service = new ipfs_cluster_service_tests();
     let test_ipfs_cluster_follow = new ipfs_cluster_follow_tests();
     let test_ipget = new ipget_tests();

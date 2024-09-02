@@ -9,3 +9,7 @@ export * from './ipfs_kit_js/ipget.js';
 
 export { ipfsKitJs } from './ipfs_kit_js/ipfs_kit.js';
 export { ipfsKitJs as default } from './ipfs_kit_js/ipfs_kit.js';
+export * from './test/test.js';
+export { test_ipfs_kit_js } from './test/test.js';
+const test = test_ipfs_kit_js;
+export { test };
